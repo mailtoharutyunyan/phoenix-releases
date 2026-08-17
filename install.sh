@@ -2,9 +2,15 @@
 #
 # Phoenix installer for macOS.
 #
-#   curl -fsSL https://raw.githubusercontent.com/mailtoharutyunyan/phoenix-releases/main/install.sh | bash
+#   curl -fsSL https://github.com/mailtoharutyunyan/phoenix-releases/releases/latest/download/install.sh | bash
 #
 # Downloads the current release and installs it to /Applications.
+#
+# That URL is a RELEASE ASSET, not raw.githubusercontent.com. raw is GitHub's source-viewing
+# endpoint and is throttled per IP: it started answering `curl: (56) ... error: 429` mid-install,
+# which looks like a broken installer and is really a borrowed distribution channel. Release assets
+# come from the same CDN that serves the 156 MB archive, with no such limit. The workflow in the
+# source repo attaches this file to every release, so the URL always exists.
 #
 # WHY THIS EXISTS, and why it is not a security bypass
 # ----------------------------------------------------

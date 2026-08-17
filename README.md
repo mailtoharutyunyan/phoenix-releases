@@ -21,7 +21,7 @@ all run on your own machine.
 One command. Paste it into Terminal:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/mailtoharutyunyan/phoenix-releases/main/install.sh | bash
+curl -fsSL https://github.com/mailtoharutyunyan/phoenix-releases/releases/latest/download/install.sh | bash
 ```
 
 That downloads the current release, verifies its signature, installs it to `/Applications`, and
@@ -40,7 +40,31 @@ made with `curl` never receives one**. So the script does not remove a protectio
 check; it never creates the flag in the first place. The app is not modified, and the script
 verifies its code signature before installing — if that fails, nothing is installed.
 
-You can [read the script](install.sh) before running it. It is 60 lines.
+You can [read the script](install.sh) before running it.
+</details>
+
+<details>
+<summary><b>If that command fails with <code>error: 429</code></b></summary>
+
+`429` means "too many requests" — a rate limit, not a problem with your Mac or with Phoenix. It
+happens when the script is fetched from `raw.githubusercontent.com`, which is GitHub's endpoint for
+*viewing source files* and is throttled per IP address. Several installs from one office network, or
+one person retrying a few times, is enough to trip it.
+
+The command above avoids it: a release asset is served from the same CDN that hands out the 156 MB
+app archive, which has no such limit. If you have an older copy of the one-liner and hit 429, use
+either of these instead — both fetch exactly the same script:
+
+```bash
+# via jsDelivr's CDN
+curl -fsSL https://cdn.jsdelivr.net/gh/mailtoharutyunyan/phoenix-releases@main/install.sh | bash
+
+# via the GitHub API (never cached, so always the newest script)
+curl -fsSL -H 'Accept: application/vnd.github.raw' \
+  https://api.github.com/repos/mailtoharutyunyan/phoenix-releases/contents/install.sh | bash
+```
+
+A 429 is temporary. Waiting a few minutes also clears it.
 </details>
 
 **Prefer to do it by hand?**

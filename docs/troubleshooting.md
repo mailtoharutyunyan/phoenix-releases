@@ -16,7 +16,7 @@ it. Pick any one of these:
 **Reinstall with the script** — avoids the flag entirely, because `curl` never applies one:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/mailtoharutyunyan/phoenix-releases/main/install.sh | bash
+curl -fsSL https://github.com/mailtoharutyunyan/phoenix-releases/releases/latest/download/install.sh | bash
 ```
 
 **Remove the flag from what you already downloaded:**
@@ -114,7 +114,7 @@ answer is slow, check your connection.
 Re-run the install script — it replaces the existing copy:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/mailtoharutyunyan/phoenix-releases/main/install.sh | bash
+curl -fsSL https://github.com/mailtoharutyunyan/phoenix-releases/releases/latest/download/install.sh | bash
 ```
 
 If it asks for your password at the "Installing to /Applications" step, that is expected once:
