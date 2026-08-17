@@ -21,7 +21,43 @@ set -euo pipefail
 REPO="mailtoharutyunyan/phoenix-releases"
 APP="/Applications/Phoenix.app"
 TMP="$(mktemp -d)"
-trap 'rm -rf "$TMP"' EXIT
+
+# Ctrl-C MUST take the background downloads with it.
+#
+# Found by watching a real interrupted install: the parallel fetch runs curl as background jobs,
+# and a background job does NOT receive SIGINT from the terminal -- only the foreground process
+# group does. So Ctrl-C killed this script and left four curls plus the progress ticker running,
+# orphaned. Observed consequences: stale "6%" lines printed over the NEXT command's output (the
+# ticker still had the terminal), and two abandoned downloads of the previous version competing
+# for bandwidth with the install the user was waiting on -- on the slow connection that motivated
+# parallel downloads in the first place.
+#
+# Partial part files are deliberately left on disk: they live in the cache and the next run
+# resumes from them. It is the processes that must die, not the progress.
+# `fetch_range ... &` backgrounds a FUNCTION, so $! is a subshell and the curl is ITS child --
+# killing the recorded pid alone leaves the download running, which is precisely what was observed.
+# So each child is reaped as a tree: its children first (pkill -P), then itself.
+CHILDREN=""
+cleanup() {
+  # Loops first so nothing respawns, then the curls by their RECORDED pids (see fetch_range for
+  # why the pid file exists), then a second pass for anything that slipped between the two.
+  for _pass in 1 2; do
+    for _pid in $CHILDREN; do kill "$_pid" 2>/dev/null || true; done
+    for _f in "$ZIP".part*.pid; do
+      [ -f "$_f" ] || continue
+      kill "$(cat "$_f")" 2>/dev/null || true
+      rm -f "$_f"
+    done
+  done
+  rm -rf "$TMP"
+}
+# An interrupt must END the run, not just tidy up: a trap that RETURNS resumes the script, and it
+# resumed straight into `cat` of the half-finished parts -- assembling a truncated archive and
+# carrying on toward installing it. Measured. So the signal handler exits, and 130 is the
+# conventional code for "killed by SIGINT".
+on_signal() { cleanup; exit 130; }
+trap cleanup EXIT
+trap on_signal INT TERM
 
 bold() { printf '\033[1m%s\033[0m\n' "$1"; }
 ok()   { printf '\033[0;32m✓\033[0m %s\n' "$1"; }
@@ -77,15 +113,21 @@ have_bytes() { [ -f "$1" ] && wc -c < "$1" | tr -d ' ' || echo 0; }
 # Fetch one byte range into its own file, resuming and retrying. Appends, so a part that is
 # half-there continues rather than restarting.
 fetch_range() {
-  local start=$1 end=$2 out=$3 want=$(( $2 - $1 + 1 )) tries=0 have
+  local start=$1 end=$2 out=$3 want=$(( $2 - $1 + 1 )) tries=0 have cpid
   while :; do
     have="$(have_bytes "$out")"
-    [ "$have" -ge "$want" ] && return 0
-    if curl -fsL --retry 3 --retry-delay 2 -r "$(( start + have ))-${end}" "$URL" >> "$out"; then
-      continue
-    fi
+    [ "$have" -ge "$want" ] && { rm -f "$out.pid"; return 0; }
+    # curl runs in the BACKGROUND and its pid is written down. Killing the enclosing subshell is
+    # not enough and cannot be made enough: kill the subshell first and the curl is reparented to
+    # launchd, where `pkill -P` can no longer find it; kill the curl first and the loop here
+    # simply starts another one. Both were measured, each leaving a download alive. The pid file
+    # is the only version that is deterministic.
+    curl -fsL --retry 3 --retry-delay 2 -r "$(( start + have ))-${end}" "$URL" >> "$out" &
+    cpid=$!
+    echo "$cpid" > "$out.pid"
+    if wait "$cpid"; then continue; fi
     tries=$(( tries + 1 ))
-    [ "$tries" -ge 4 ] && return 1
+    [ "$tries" -ge 4 ] && { rm -f "$out.pid"; return 1; }
     sleep 2
   done
 }
@@ -98,6 +140,7 @@ download_parallel() {
     [ "$i" -eq $(( PARTS - 1 )) ] && end=$(( SIZE - 1 ))
     fetch_range "$start" "$end" "$ZIP.part$i" &
     pids+=($!)
+    CHILDREN="$CHILDREN $!"
   done
   # Progress from the parts themselves: four interleaved `curl -#` bars are unreadable. Runs in a
   # subshell, so no `local` here -- it is only valid inside a function.
@@ -111,12 +154,14 @@ download_parallel() {
       sleep 2
     done ) &
   local ticker=$!
+  CHILDREN="$CHILDREN $ticker"
   for i in "${pids[@]}"; do wait "$i" || rc=1; done
   kill "$ticker" 2>/dev/null || true
   wait "$ticker" 2>/dev/null || true
   printf '\r            \r'
   [ "$rc" -eq 0 ] || return 1
-  cat "$ZIP".part* > "$ZIP" && rm -f "$ZIP".part*
+  rm -f "$ZIP".part*.pid                  # never let a pid file end up inside the archive
+  cat "$ZIP".part[0-9]* > "$ZIP" && rm -f "$ZIP".part*
 }
 
 download_single() {
@@ -133,7 +178,11 @@ download_single() {
 if [ "$(have_bytes "$ZIP")" = "$SIZE" ] && [ "$SIZE" -gt 0 ]; then
   ok "Already downloaded — using the cached copy"
 else
-  echo "  Downloading (about 165 MB)…"
+  if [ "$SIZE" -gt 0 ]; then
+    echo "  Downloading ($(( SIZE / 1000000 )) MB)…"
+  else
+    echo "  Downloading…"
+  fi
   if [ "$RANGES" = "bytes" ] && [ "$SIZE" -gt 0 ]; then
     download_parallel || download_single || die "Download failed. Re-run this installer — it continues where it stopped."
   else
