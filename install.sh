@@ -68,9 +68,29 @@ if pgrep -qf "$APP/Contents/MacOS" 2>/dev/null; then
 fi
 
 echo "  Installing to /Applications…"
-rm -rf "$APP"
+# A copy installed from the .pkg is owned by ROOT -- the installer writes into the localSystem
+# domain -- and an unprivileged `rm -rf` cannot delete the files inside it. Every one of them
+# failed with "Permission denied", and because this script runs under `set -e` the update then
+# aborted at exactly the point where a bundle can be left half-replaced. (Observed: the old
+# 1.6.1 survived intact, because nothing could be removed at all, but that was luck rather
+# than design.)
+#
+# So: try as the user, and escalate ONLY when that genuinely fails. sudo prompts on /dev/tty
+# rather than stdin, which matters here — stdin is this script, piped from curl.
+if [ -e "$APP" ] && ! rm -rf "$APP" 2>/dev/null; then
+  echo "  The installed copy is owned by root — it came from the .pkg installer."
+  echo "  macOS needs your password to replace it:"
+  sudo -p "  Password for %u: " rm -rf "$APP" \
+    || die "Could not remove $APP. Run 'sudo rm -rf $APP' and then this installer again. Nothing was changed."
+fi
+
 # ditto rather than mv/cp: it preserves extended attributes and keeps the signature intact.
-ditto "$TMP/out/Phoenix.app" "$APP" || die "Could not write to /Applications. Try again with sudo."
+if ! ditto "$TMP/out/Phoenix.app" "$APP" 2>/dev/null; then
+  sudo -p "  Password for %u: " ditto "$TMP/out/Phoenix.app" "$APP" \
+    || die "Could not write to $APP. Nothing was installed."
+  # Hand it to the user, so every future update is a plain user-level replace with no password.
+  sudo chown -R "$(id -un):staff" "$APP" 2>/dev/null || true
+fi
 
 # Belt and braces. A curl download carries no quarantine flag, so this normally finds nothing --
 # but it costs nothing and covers the case where someone pipes this script from a saved file that
@@ -88,5 +108,7 @@ echo "    • Screen & System Audio Recording  the other side's audio, and scree
 echo
 echo "  Phoenix has a blank icon on purpose — look for the entry named Phoenix."
 echo "  Screen Recording only takes effect after you quit and reopen the app."
+echo "  These are asked for again after every update: without a paid Apple certificate,"
+echo "  macOS identifies the app by the hash of one exact binary, so each build is new to it."
 echo
 open "$APP" 2>/dev/null || true

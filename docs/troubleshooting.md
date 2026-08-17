@@ -117,6 +117,15 @@ Re-run the install script — it replaces the existing copy:
 curl -fsSL https://raw.githubusercontent.com/mailtoharutyunyan/phoenix-releases/main/install.sh | bash
 ```
 
+If it asks for your password at the "Installing to /Applications" step, that is expected once:
+the copy being replaced was installed from the `.pkg`, which puts it in place as the *system*
+rather than as you, so removing it needs administrator rights. The replacement belongs to you, so
+later updates ask for nothing.
+
+Older versions of the script did not ask, and stopped with a page of
+`rm: … Permission denied` instead. Nothing was damaged when that happened — the previous version
+stayed installed and working. Re-running the current script completes the update.
+
 ## Still stuck
 
 Include your log when reporting a problem:
