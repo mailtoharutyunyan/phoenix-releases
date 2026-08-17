@@ -46,11 +46,105 @@ ok "Found $TAG"
 ASSET="Phoenix-${VERSION}-arm64-mac.zip"
 URL="https://github.com/$REPO/releases/download/$TAG/$ASSET"
 
-echo "  Downloading (about 165 MB)…"
-curl -fL# -o "$TMP/phoenix.zip" "$URL" || die "Download failed. The release may not include $ASSET."
+# DOWNLOADING 165 MB OVER A SLOW LINK
+# -----------------------------------
+# This was one `curl -fL#`: a single stream, no resume, into a temp directory wiped on exit. On a
+# slow or flaky connection that has two bad properties. A drop at 90% threw away 148 MB and the
+# next run started from zero; and a single stream gets whatever throughput the far end feels like
+# giving it, which for GitHub's asset host varies a lot by region.
+#
+# So: keep the partial download in a CACHE that survives the run, resume from it, and pull four
+# ranges at once when the host supports Range (it does — it answers 206). Falls back to one
+# resumable stream when it does not, so nothing depends on the fast path working.
+#
+# Integrity is unchanged and still absolute: whatever is assembled here must satisfy
+# `codesign --verify --deep --strict` below, or nothing is installed.
+CACHE="${HOME}/Library/Caches/phoenix-install"
+mkdir -p "$CACHE"
+ZIP="$CACHE/$ASSET"
+PARTS=4
+
+# One HEAD request for both facts we need: how big it is, and whether ranges are served.
+# Lower-cased with tr, NOT with awk's IGNORECASE -- that is a gawk extension and macOS ships BSD
+# awk, where it is silently ignored. Caught in testing: the size parsed as empty, so the fast
+# path was never taken on the one platform this script runs on.
+HEADERS="$(curl -fsSLI "$URL" 2>/dev/null | tr -d '\r' | tr '[:upper:]' '[:lower:]' || true)"
+SIZE="$(printf '%s\n' "$HEADERS" | awk '/^content-length:/ {v=$2} END {print v+0}')"
+RANGES="$(printf '%s\n' "$HEADERS" | awk '/^accept-ranges:/ {v=$2} END {print v}')"
+
+have_bytes() { [ -f "$1" ] && wc -c < "$1" | tr -d ' ' || echo 0; }
+
+# Fetch one byte range into its own file, resuming and retrying. Appends, so a part that is
+# half-there continues rather than restarting.
+fetch_range() {
+  local start=$1 end=$2 out=$3 want=$(( $2 - $1 + 1 )) tries=0 have
+  while :; do
+    have="$(have_bytes "$out")"
+    [ "$have" -ge "$want" ] && return 0
+    if curl -fsL --retry 3 --retry-delay 2 -r "$(( start + have ))-${end}" "$URL" >> "$out"; then
+      continue
+    fi
+    tries=$(( tries + 1 ))
+    [ "$tries" -ge 4 ] && return 1
+    sleep 2
+  done
+}
+
+download_parallel() {
+  local chunk=$(( SIZE / PARTS )) i start end pids=() rc=0
+  for i in $(seq 0 $(( PARTS - 1 ))); do
+    start=$(( i * chunk ))
+    end=$(( start + chunk - 1 ))
+    [ "$i" -eq $(( PARTS - 1 )) ] && end=$(( SIZE - 1 ))
+    fetch_range "$start" "$end" "$ZIP.part$i" &
+    pids+=($!)
+  done
+  # Progress from the parts themselves: four interleaved `curl -#` bars are unreadable. Runs in a
+  # subshell, so no `local` here -- it is only valid inside a function.
+  ( while :; do
+      alive=0
+      for p in "${pids[@]}"; do kill -0 "$p" 2>/dev/null && alive=1; done
+      [ "$alive" -eq 1 ] || break
+      got=0
+      for i in $(seq 0 $(( PARTS - 1 ))); do got=$(( got + $(have_bytes "$ZIP.part$i") )); done
+      printf '\r  %s%%   ' "$(( got * 100 / SIZE ))"
+      sleep 2
+    done ) &
+  local ticker=$!
+  for i in "${pids[@]}"; do wait "$i" || rc=1; done
+  kill "$ticker" 2>/dev/null || true
+  wait "$ticker" 2>/dev/null || true
+  printf '\r            \r'
+  [ "$rc" -eq 0 ] || return 1
+  cat "$ZIP".part* > "$ZIP" && rm -f "$ZIP".part*
+}
+
+download_single() {
+  # No array for the resume flag: macOS ships bash 3.2, where expanding an EMPTY array under
+  # `set -u` aborts with "unbound variable". Caught in testing, and it would have broken every
+  # fallback download.
+  if [ -f "$ZIP" ]; then
+    curl -fL# -C - --retry 5 --retry-delay 2 -o "$ZIP" "$URL"
+  else
+    curl -fL# --retry 5 --retry-delay 2 -o "$ZIP" "$URL"
+  fi
+}
+
+if [ "$(have_bytes "$ZIP")" = "$SIZE" ] && [ "$SIZE" -gt 0 ]; then
+  ok "Already downloaded — using the cached copy"
+else
+  echo "  Downloading (about 165 MB)…"
+  if [ "$RANGES" = "bytes" ] && [ "$SIZE" -gt 0 ]; then
+    download_parallel || download_single || die "Download failed. Re-run this installer — it continues where it stopped."
+  else
+    download_single || die "Download failed. Re-run this installer — it continues where it stopped."
+  fi
+fi
 
 echo "  Unpacking…"
-unzip -q "$TMP/phoenix.zip" -d "$TMP/out" || die "The download is not a readable archive; it may be incomplete."
+# Remove the cached copy on failure: a corrupt archive that stays cached would fail identically
+# on every re-run, which is the same trap as reusing a broken Python environment.
+unzip -q "$ZIP" -d "$TMP/out" || { rm -f "$ZIP"; die "The download was not a readable archive; it has been discarded. Run this installer again."; }
 [ -d "$TMP/out/Phoenix.app" ] || die "Phoenix.app was not found inside the archive."
 
 # Verify BEFORE replacing anything already installed. A failed check must not cost the user a
@@ -96,6 +190,9 @@ fi
 # but it costs nothing and covers the case where someone pipes this script from a saved file that
 # was itself downloaded in a browser.
 xattr -cr "$APP" 2>/dev/null || true
+
+# The cache exists to survive a FAILED download, not to keep 165 MB forever once it worked.
+rm -f "$ZIP" "$ZIP".part*
 
 echo
 ok "Phoenix $VERSION is installed."
