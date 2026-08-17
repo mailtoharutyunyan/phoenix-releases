@@ -12,6 +12,9 @@
 # come from the same CDN that serves the 156 MB archive, with no such limit. The workflow in the
 # source repo attaches this file to every release, so the URL always exists.
 #
+# Mirror, if GitHub ever rate-limits anyway:
+#   curl -fsSL https://cdn.jsdelivr.net/gh/mailtoharutyunyan/phoenix-releases@main/install.sh | bash
+#
 # WHY THIS EXISTS, and why it is not a security bypass
 # ----------------------------------------------------
 # Phoenix is not signed with a paid Apple Developer certificate, so macOS tags anything you

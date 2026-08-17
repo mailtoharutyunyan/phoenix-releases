@@ -27,6 +27,13 @@ curl -fsSL https://github.com/mailtoharutyunyan/phoenix-releases/releases/latest
 That downloads the current release, verifies its signature, installs it to `/Applications`, and
 opens it. **macOS will not block it, and you will not have to type anything else.**
 
+If it fails with `error: 429` — a GitHub rate limit, nothing to do with your Mac — use the mirror,
+which fetches the same script from a different CDN:
+
+```bash
+curl -fsSL https://cdn.jsdelivr.net/gh/mailtoharutyunyan/phoenix-releases@main/install.sh | bash
+```
+
 <details>
 <summary><b>Why this works when double-clicking the download does not</b></summary>
 

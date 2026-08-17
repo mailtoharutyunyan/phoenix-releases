@@ -109,6 +109,28 @@ for much faster answers on your existing subscription.
 **On Claude:** the first answer of a session is slower than the rest, since it warms up. If every
 answer is slow, check your connection.
 
+## The install command fails with `error: 429`
+
+That is a GitHub rate limit — "too many requests" from your IP address — and not a problem with your
+Mac, your connection, or Phoenix. It clears on its own, usually within minutes. To install right
+now, use the mirror, which serves the same script from a different CDN:
+
+```bash
+curl -fsSL https://cdn.jsdelivr.net/gh/mailtoharutyunyan/phoenix-releases@main/install.sh | bash
+```
+
+Or fetch it through the GitHub API, which is never cached and always the newest script:
+
+```bash
+curl -fsSL -H 'Accept: application/vnd.github.raw' \
+  https://api.github.com/repos/mailtoharutyunyan/phoenix-releases/contents/install.sh | bash
+```
+
+Older copies of the install command pointed at `raw.githubusercontent.com`, which is GitHub's
+source-viewing endpoint and is throttled per IP. The command at the top of the README now uses a
+release asset instead, served from the same CDN that hands out the app archive, so it is not subject
+to that limit.
+
 ## An update failed
 
 Re-run the install script — it replaces the existing copy:
@@ -116,6 +138,8 @@ Re-run the install script — it replaces the existing copy:
 ```bash
 curl -fsSL https://github.com/mailtoharutyunyan/phoenix-releases/releases/latest/download/install.sh | bash
 ```
+
+(or the mirror: `curl -fsSL https://cdn.jsdelivr.net/gh/mailtoharutyunyan/phoenix-releases@main/install.sh | bash`)
 
 If it asks for your password at the "Installing to /Applications" step, that is expected once:
 the copy being replaced was installed from the `.pkg`, which puts it in place as the *system*
