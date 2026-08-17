@@ -80,16 +80,46 @@ echo
 # Apple Silicon only -- there is no Intel build, and an arm64 app will not run under Rosetta.
 [ "$(uname -m)" = "arm64" ] || die "Phoenix requires an Apple Silicon Mac (M1 or later). There is no Intel build."
 
+# EVERY GITHUB CALL HERE HAS A SECOND DOOR.
+#
+# `curl: (56) ... error: 429` was reported mid-install: GitHub rate limits per IP, and when it
+# does, one host says no while another still answers -- measured during that failure, raw.github
+# 429 while api.github.com returned 200. A single point of contact turns a temporary limit into a
+# dead installer, so the two things this script fetches from GitHub each have a fallback on a
+# different host. The bytes are identical either way; only the front door differs.
+MIRROR_HINT="curl -fsSL https://cdn.jsdelivr.net/gh/$REPO@main/install.sh | bash"
+
 echo "  Finding the latest release…"
-# Resolve the tag from the redirect on /releases/latest rather than the API: no token, no rate
-# limit that a few people behind one office IP could trip.
-TAG="$(curl -fsSLI -o /dev/null -w '%{url_effective}' "https://github.com/$REPO/releases/latest" | sed 's|.*/tag/||')"
-[ -n "$TAG" ] || die "Could not determine the latest version. Check your connection."
+# Preferred: the redirect on /releases/latest -- no token, and it costs no API quota.
+# Fallback: the API, which is a different host with a separate limit.
+resolve_tag() {
+  local t
+  t="$(curl -fsSLI -o /dev/null -w '%{url_effective}' "https://github.com/$REPO/releases/latest" 2>/dev/null | sed 's|.*/tag/||')"
+  case "$t" in v[0-9]*) printf '%s' "$t"; return 0 ;; esac
+  t="$(curl -fsSL -H 'Accept: application/vnd.github+json' "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null \
+        | awk -F'"' '/"tag_name"/ { print $4; exit }')"
+  case "$t" in v[0-9]*) printf '%s' "$t"; return 0 ;; esac
+  return 1
+}
+TAG="$(resolve_tag)" || die "Could not determine the latest version — GitHub may be rate limiting you (error 429), which clears in a few minutes. You can also try: $MIRROR_HINT"
 VERSION="${TAG#v}"
 ok "Found $TAG"
 
 ASSET="Phoenix-${VERSION}-arm64-mac.zip"
 URL="https://github.com/$REPO/releases/download/$TAG/$ASSET"
+
+# The API's own download URL for the same asset, resolved ONLY if the normal one fails: it costs an
+# API request, and the unauthenticated allowance is small enough not to spend on the happy path.
+# Asset objects list "url" before "name", so the url is remembered and printed when the name matches.
+ALT_URL=""
+alt_url() {
+  [ -n "$ALT_URL" ] && { printf '%s' "$ALT_URL"; return 0; }
+  ALT_URL="$(curl -fsSL -H 'Accept: application/vnd.github+json' "https://api.github.com/repos/$REPO/releases/tags/$TAG" 2>/dev/null \
+    | awk -v want="$ASSET" -F'"' '
+        /"url": *"https:\/\/api\.github\.com\/repos\/[^"]*\/releases\/assets\// { u=$4 }
+        /"name":/ { if ($4 == want && u != "") { print u; exit } }')"
+  [ -n "$ALT_URL" ] && printf '%s' "$ALT_URL"
+}
 
 # DOWNLOADING 165 MB OVER A SLOW LINK
 # -----------------------------------
@@ -177,11 +207,27 @@ download_single() {
   # No array for the resume flag: macOS ships bash 3.2, where expanding an EMPTY array under
   # `set -u` aborts with "unbound variable". Caught in testing, and it would have broken every
   # fallback download.
+  local u="${1:-$URL}"
   if [ -f "$ZIP" ]; then
-    curl -fL# -C - --retry 5 --retry-delay 2 -o "$ZIP" "$URL"
+    curl -fL# -C - --retry 5 --retry-delay 2 -H 'Accept: application/octet-stream' -o "$ZIP" "$u"
   else
-    curl -fL# --retry 5 --retry-delay 2 -o "$ZIP" "$URL"
+    curl -fL# --retry 5 --retry-delay 2 -H 'Accept: application/octet-stream' -o "$ZIP" "$u"
   fi
+}
+
+# Last resort: the same asset through the API host. Only reached when the normal download failed,
+# which on a rate limit is exactly when a different host is worth trying.
+#
+# One resumable stream rather than four ranges, and NOT because ranges fail here -- measured, this
+# endpoint answers a Range request with 206. It is because the unauthenticated API allowance is
+# small (60 requests an hour) and this path exists to finish an install that is already in trouble;
+# spending four requests plus retries to shave minutes off a last resort is the wrong trade.
+download_via_api() {
+  local u
+  u="$(alt_url)" || return 1
+  [ -n "$u" ] || return 1
+  echo "  Retrying through GitHub's API host…"
+  download_single "$u"
 }
 
 if [ "$(have_bytes "$ZIP")" = "$SIZE" ] && [ "$SIZE" -gt 0 ]; then
@@ -193,9 +239,11 @@ else
     echo "  Downloading…"
   fi
   if [ "$RANGES" = "bytes" ] && [ "$SIZE" -gt 0 ]; then
-    download_parallel || download_single || die "Download failed. Re-run this installer — it continues where it stopped."
+    download_parallel || download_single || download_via_api \
+      || die "Download failed. Re-run this installer — it continues where it stopped. If it keeps failing with 429, GitHub is rate limiting you; that clears in a few minutes, or try: $MIRROR_HINT"
   else
-    download_single || die "Download failed. Re-run this installer — it continues where it stopped."
+    download_single || download_via_api \
+      || die "Download failed. Re-run this installer — it continues where it stopped. If it keeps failing with 429, GitHub is rate limiting you; that clears in a few minutes, or try: $MIRROR_HINT"
   fi
 fi
 
