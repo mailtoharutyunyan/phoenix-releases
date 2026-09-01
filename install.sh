@@ -47,17 +47,29 @@ TMP="$(mktemp -d)"
 # killing the recorded pid alone leaves the download running, which is precisely what was observed.
 # So each child is reaped as a tree: its children first (pkill -P), then itself.
 CHILDREN=""
+LOCK=""
+LOCK_HELD=0
 cleanup() {
   # Loops first so nothing respawns, then the curls by their RECORDED pids (see fetch_range for
   # why the pid file exists), then a second pass for anything that slipped between the two.
+  #
+  # The pid files live in $TMP, which is unique per run (mktemp -d), and NOT beside the parts in
+  # the shared cache. When they were in the cache this loop killed the downloads of any OTHER
+  # installer that happened to be running: every run globbed the same directory, so simply
+  # starting a second installer terminated the first one's curls. Observed as three
+  # "Terminated: 15" lines at 0% on a run that was the only one left alive.
   for _pass in 1 2; do
     for _pid in $CHILDREN; do kill "$_pid" 2>/dev/null || true; done
-    for _f in "$ZIP".part*.pid; do
+    for _f in "$TMP"/*.pid; do
       [ -f "$_f" ] || continue
       kill "$(cat "$_f")" 2>/dev/null || true
       rm -f "$_f"
     done
   done
+  # ONLY if this run actually acquired it. A run that exited because someone else held the lock
+  # must not release it on the way out -- that would hand the cache to a third installer while
+  # the real owner is still downloading into it, which is the exact collision the lock prevents.
+  [ "$LOCK_HELD" = "1" ] && [ -n "$LOCK" ] && rm -rf "$LOCK"
   rm -rf "$TMP"
 }
 # An interrupt must END the run, not just tidy up: a trap that RETURNS resumes the script, and it
@@ -139,6 +151,31 @@ mkdir -p "$CACHE"
 ZIP="$CACHE/$ASSET"
 PARTS=4
 
+# ONE INSTALLER AT A TIME.
+#
+# The cache path is fixed and the parts are built by appending, so two installers running at
+# once append into the SAME four files and each duplicated region lands in the archive twice.
+# This is not hypothetical and it is easy to trigger: re-running because the first run looks
+# stuck is the obvious thing to do. Measured when it happened -- the progress ticker read 147%
+# and then 155%, and unzip found 85,533,240 extra bytes. Nothing in the output said "you are
+# running two of these"; it said the download was not a readable archive.
+#
+# mkdir is the lock because it is atomic on every filesystem this runs on; a test-then-create
+# with [ -e ] is not.
+LOCK="$CACHE/.lock"
+if ! mkdir "$LOCK" 2>/dev/null; then
+  LOCK_OWNER="$(cat "$LOCK/pid" 2>/dev/null || echo)"
+  if [ -n "$LOCK_OWNER" ] && kill -0 "$LOCK_OWNER" 2>/dev/null; then
+    die "Another Phoenix install is already running (pid $LOCK_OWNER). Let it finish, or stop it and run this again."
+  fi
+  # Stale: the owner died without releasing it (kill -9, or a reboot mid-download). Reclaim,
+  # rather than making the user delete a lock file to install an app.
+  rm -rf "$LOCK"
+  mkdir "$LOCK" 2>/dev/null || die "Could not take the install lock at $LOCK. Remove it and try again."
+fi
+LOCK_HELD=1
+echo $$ > "$LOCK/pid"
+
 # One HEAD request for both facts we need: how big it is, and whether ranges are served.
 # Lower-cased with tr, NOT with awk's IGNORECASE -- that is a gawk extension and macOS ships BSD
 # awk, where it is silently ignored. Caught in testing: the size parsed as empty, so the fast
@@ -153,20 +190,52 @@ have_bytes() { [ -f "$1" ] && wc -c < "$1" | tr -d ' ' || echo 0; }
 # half-there continues rather than restarting.
 fetch_range() {
   local start=$1 end=$2 out=$3 want=$(( $2 - $1 + 1 )) tries=0 have cpid
+  local base stage pidf
+  base="$(basename "$out")"
+  stage="$TMP/$base.chunk"
+  pidf="$TMP/$base.pid"
   while :; do
     have="$(have_bytes "$out")"
-    [ "$have" -ge "$want" ] && { rm -f "$out.pid"; return 0; }
+    [ "$have" -ge "$want" ] && { rm -f "$pidf" "$stage"; return 0; }
     # curl runs in the BACKGROUND and its pid is written down. Killing the enclosing subshell is
     # not enough and cannot be made enough: kill the subshell first and the curl is reparented to
     # launchd, where `pkill -P` can no longer find it; kill the curl first and the loop here
     # simply starts another one. Both were measured, each leaving a download alive. The pid file
     # is the only version that is deterministic.
-    curl -fsL --retry 3 --retry-delay 2 -r "$(( start + have ))-${end}" "$URL" >> "$out" &
+    #
+    # TWO THINGS HERE ARE LOAD-BEARING, and the obvious version of each corrupted real downloads.
+    #
+    #   * NO --retry. It looks free, and it is not: curl's own retry re-requests the range FROM
+    #     ITS START, and the old code redirected with `>> "$out"`, so those bytes were appended a
+    #     SECOND time. `have` is read once, before curl runs, so the resume offset cannot see the
+    #     duplication -- and nothing downstream checks, because each part is the right length or
+    #     longer. The archive then assembles with extra bytes and unzip says "extra bytes at
+    #     beginning or within zipfile", which reads as a bad release rather than a bad download.
+    #     Retrying belongs to this loop, where the offset is recomputed on every pass.
+    #
+    #   * The transfer lands in a STAGING file and is appended only once its length is known, so
+    #     a killed or failed curl can never leave the part file in a state the resume offset
+    #     would misread. The staging file lives in $TMP and NOT at "$out.chunk", because
+    #     "$out.chunk" matches the `part[0-9]*` glob that assembles the archive -- it would have
+    #     been concatenated into the zip, replacing one corruption with another.
+    rm -f "$stage"
+    curl -fsL -r "$(( start + have ))-${end}" -o "$stage" "$URL" &
     cpid=$!
-    echo "$cpid" > "$out.pid"
-    if wait "$cpid"; then continue; fi
+    echo "$cpid" > "$pidf"
+    if wait "$cpid"; then
+      cat "$stage" >> "$out"
+      rm -f "$stage"
+      continue
+    fi
+    # A failed transfer still wrote a valid PREFIX of what was asked for -- curl writes in order
+    # -- so keep those bytes and let the loop resume past them, rather than discarding good
+    # megabytes on the flaky connection that motivated resuming in the first place.
+    [ -s "$stage" ] && cat "$stage" >> "$out"
+    rm -f "$stage"
+    # Counted whether or not progress was made: a link dribbling a few bytes per attempt would
+    # otherwise spin here forever, looking like a hung install.
     tries=$(( tries + 1 ))
-    [ "$tries" -ge 4 ] && { rm -f "$out.pid"; return 1; }
+    [ "$tries" -ge 8 ] && { rm -f "$pidf" "$stage"; return 1; }
     sleep 2
   done
 }
@@ -188,7 +257,11 @@ download_parallel() {
       for p in "${pids[@]}"; do kill -0 "$p" 2>/dev/null && alive=1; done
       [ "$alive" -eq 1 ] || break
       got=0
-      for i in $(seq 0 $(( PARTS - 1 ))); do got=$(( got + $(have_bytes "$ZIP.part$i") )); done
+      # Staging bytes count too, or the bar sits still for a whole chunk and then jumps -- the
+      # part file only grows when a transfer completes.
+      for i in $(seq 0 $(( PARTS - 1 ))); do
+        got=$(( got + $(have_bytes "$ZIP.part$i") + $(have_bytes "$TMP/$ASSET.part$i.chunk") ))
+      done
       printf '\r  %s%%   ' "$(( got * 100 / SIZE ))"
       sleep 2
     done ) &
@@ -199,8 +272,17 @@ download_parallel() {
   wait "$ticker" 2>/dev/null || true
   printf '\r            \r'
   [ "$rc" -eq 0 ] || return 1
-  rm -f "$ZIP".part*.pid                  # never let a pid file end up inside the archive
+  # No pid or staging files to exclude here any more -- both live in $TMP, precisely so they
+  # cannot be caught by the glob that assembles the archive.
   cat "$ZIP".part[0-9]* > "$ZIP" && rm -f "$ZIP".part*
+  # The assembled length must be exactly what the server advertised. Cheap, and it localises the
+  # blame: without it a mis-assembled archive is first noticed by unzip, minutes later, and
+  # reported as a bad archive rather than a bad assembly.
+  if [ "$(have_bytes "$ZIP")" != "$SIZE" ]; then
+    echo "  Assembled size did not match; retrying as a single stream."
+    rm -f "$ZIP" "$ZIP".part*
+    return 1
+  fi
 }
 
 download_single() {
@@ -245,6 +327,30 @@ else
     download_single || download_via_api \
       || die "Download failed. Re-run this installer — it continues where it stopped. If it keeps failing with 429, GitHub is rate limiting you; that clears in a few minutes, or try: $MIRROR_HINT"
   fi
+fi
+
+# CHECK THE BYTES BEFORE SPENDING MINUTES UNPACKING THEM.
+#
+# unzip does catch a corrupt archive, but it catches it late and describes it badly: it prints a
+# screen of "bad zipfile offset" lines and the script says "not a readable archive", which points
+# the user at the RELEASE when the release is fine and their copy of it is not. Every release
+# ships latest-mac.yml -- it is what the in-app updater verifies against -- so the authoritative
+# checksum is one small request away and gives a one-second, unambiguous answer.
+#
+# Soft-fails when the file or the field is missing: an old release without it should still be
+# installable, and codesign --verify below remains the check that actually gates installation.
+echo "  Verifying the download…"
+EXPECT_SHA="$(curl -fsSL "https://github.com/$REPO/releases/download/$TAG/latest-mac.yml" 2>/dev/null \
+  | awk '/^sha512:/ { print $2; exit }')"
+if [ -n "$EXPECT_SHA" ]; then
+  ACTUAL_SHA="$(openssl dgst -sha512 -binary "$ZIP" | openssl base64 -A)"
+  if [ "$ACTUAL_SHA" != "$EXPECT_SHA" ]; then
+    rm -f "$ZIP" "$ZIP".part*
+    die "The download does not match the checksum published for $TAG, so it has been discarded — the release itself is fine. This is an interrupted or duplicated download; run this installer again."
+  fi
+  ok "Checksum verified"
+else
+  echo "  (no checksum published for $TAG — the signature check below still applies)"
 fi
 
 echo "  Unpacking…"
