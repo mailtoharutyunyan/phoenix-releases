@@ -327,17 +327,26 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
 </section>
 
 <section>
-  <div class="wrap">
-    <p class="kicker">System design rounds</p>
-    <h2>It draws the architecture while you talk</h2>
-    <p class="lead">
-      The diagram is a separate, concurrent request, so the words you speak arrive in about two
-      seconds and never wait for the picture. The board opens with a core of five to seven boxes and
-      holds the rest back, dimmed — because reproducing an eighteen-node architecture at minute three
-      spends the clock and pre-empts the interviewer. Every box explains itself on hover, and the
-      request path is numbered so you can narrate it in order.
-    </p>
-    <div class="shot wide"><img src="images/04-design-board.png" alt="The architecture board: tiered bands, a numbered request path, held-back components drawn dimmed." /></div>
+  <div class="wrap split flip">
+    <div class="txt">
+      <p class="kicker">System design rounds</p>
+      <h2>It draws the architecture while you talk</h2>
+      <p class="lead" style="margin-bottom:20px">
+        The diagram is a separate, concurrent request, so the words you speak arrive in about two
+        seconds and never wait for the picture.
+      </p>
+      <p class="lead" style="margin-bottom:0">
+        The board opens with a core of five to seven boxes and holds the rest back, dimmed —
+        because reproducing an eighteen-node architecture at minute three spends the clock and
+        pre-empts the interviewer. Every box explains itself on hover, and the request path is
+        numbered along the bottom so you can narrate it in order.
+      </p>
+    </div>
+    <!-- The board is a PORTRAIT crop, so it belongs in a half column. Shown full-width it was a
+         wide canvas mostly made of empty space, and the labels came out unreadable — the most
+         persuasive screenshot on the page reduced to mush. Cropped to the drawing itself, with
+         the dead band between the last node and the path strip removed. -->
+    <div class="shot"><img src="images/04-design-board.png" alt="The architecture board: tiered bands, a numbered request path along the bottom, and held-back components drawn dimmed." /></div>
   </div>
 </section>
 
