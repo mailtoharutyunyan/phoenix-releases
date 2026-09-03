@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Phoenix — an AI interview assistant that stays out of your screen share</title>
+<meta name="description" content="Phoenix listens to your interview, transcribes both sides, and streams an answer into an overlay that screen sharing cannot see. Speech runs on your Mac. macOS, Apple Silicon." />
+<link rel="icon" href="images/logo.png" />
+
+<!-- Open Graph / social -->
+<meta property="og:title" content="Phoenix — an AI interview assistant" />
+<meta property="og:description" content="Hears both sides of the call, answers in about a second and a half, and stays out of your screen share." />
+<meta property="og:image" content="images/03-answer.png" />
+<meta property="og:type" content="website" />
+
+<style>
+  /* System font stack on purpose: no webfont request, so the page paints immediately and
+     depends on nothing it does not ship. */
+  :root{
+    --bg:#0a0a0b;
+    --bg-soft:#111113;
+    --bg-card:#151517;
+    --line:rgba(255,255,255,.09);
+    --line-soft:rgba(255,255,255,.055);
+    --fg:#f4f4f5;
+    --fg-mid:#a8a8ad;
+    --fg-dim:#76767d;
+    --ember:#ff6a2b;
+    --ember-soft:rgba(255,106,43,.13);
+    --radius:14px;
+    --maxw:1120px;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--bg);color:var(--fg);
+    font-family:var(--sans);
+    font-size:17px;line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+
+  /* ── nav ─────────────────────────────────────────────────────────── */
+  header{
+    position:sticky;top:0;z-index:20;
+    background:rgba(10,10,11,.72);backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line-soft);
+  }
+  .nav{display:flex;align-items:center;gap:28px;height:62px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:650;letter-spacing:-.01em;text-decoration:none}
+  .brand img{width:26px;height:26px;border-radius:6px}
+  .nav .spacer{flex:1}
+  .nav a.link{color:var(--fg-mid);text-decoration:none;font-size:14.5px}
+  .nav a.link:hover{color:var(--fg)}
+  @media(max-width:720px){.nav a.link{display:none}}
+
+  .btn{
+    display:inline-block;border-radius:10px;padding:11px 20px;
+    font-size:15px;font-weight:600;text-decoration:none;border:1px solid transparent;
+    transition:transform .12s ease, background .12s ease;
+  }
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--ember);color:#140800}
+  .btn-primary:hover{background:#ff7d46}
+  .btn-ghost{border-color:var(--line);color:var(--fg)}
+  .btn-ghost:hover{background:rgba(255,255,255,.05)}
+  .btn-sm{padding:8px 15px;font-size:14px}
+
+  /* ── hero ────────────────────────────────────────────────────────── */
+  .hero{padding:96px 0 64px;text-align:center}
+  .eyebrow{
+    display:inline-block;font-family:var(--mono);font-size:12px;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--ember);
+    background:var(--ember-soft);border:1px solid rgba(255,106,43,.22);
+    padding:5px 13px;border-radius:999px;margin-bottom:26px;
+  }
+  h1{
+    font-size:clamp(38px,6.2vw,68px);line-height:1.05;letter-spacing:-.032em;
+    font-weight:680;margin:0 0 22px;
+  }
+  h1 .accent{
+    background:linear-gradient(100deg,var(--ember),#ffb07a);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .sub{font-size:clamp(17px,2.1vw,21px);color:var(--fg-mid);max-width:660px;margin:0 auto 34px}
+  .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .note{margin-top:18px;font-size:13.5px;color:var(--fg-dim)}
+
+  /* ── install block ───────────────────────────────────────────────── */
+  .install{max-width:760px;margin:44px auto 0;text-align:left}
+  .install-label{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-dim);margin-bottom:9px}
+  .code{
+    position:relative;background:#08080a;border:1px solid var(--line);
+    border-radius:12px;padding:16px 52px 16px 18px;
+    font-family:var(--mono);font-size:13.5px;line-height:1.6;
+    color:#e6e6e9;overflow-x:auto;white-space:pre;
+  }
+  .code .prompt{color:var(--ember);user-select:none}
+  .copy{
+    position:absolute;top:9px;right:9px;background:rgba(255,255,255,.06);
+    border:1px solid var(--line);color:var(--fg-mid);border-radius:7px;
+    font-size:11.5px;padding:5px 9px;cursor:pointer;font-family:var(--sans);
+  }
+  .copy:hover{color:var(--fg);background:rgba(255,255,255,.1)}
+
+  /* ── shots ───────────────────────────────────────────────────────── */
+  .shot{
+    border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;
+    background:var(--bg-soft);box-shadow:0 24px 60px rgba(0,0,0,.5);
+  }
+  .shot img{display:block;width:100%;height:auto}
+  .hero-shot{margin:64px auto 0;max-width:960px}
+  .cap{margin-top:12px;font-size:13.5px;color:var(--fg-dim);text-align:center}
+
+  /* ── sections ────────────────────────────────────────────────────── */
+  section{padding:80px 0;border-top:1px solid var(--line-soft)}
+  h2{font-size:clamp(27px,3.4vw,38px);line-height:1.15;letter-spacing:-.024em;font-weight:660;margin:0 0 16px}
+  .lead{color:var(--fg-mid);max-width:640px;margin:0 0 40px}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--ember);margin-bottom:12px}
+
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+  .split.flip .txt{order:2}
+  @media(max-width:880px){.split{grid-template-columns:1fr;gap:30px}.split.flip .txt{order:0}}
+
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  @media(max-width:880px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--bg-card);border:1px solid var(--line-soft);border-radius:var(--radius);padding:26px}
+  .card h3{margin:0 0 9px;font-size:17.5px;font-weight:640;letter-spacing:-.01em}
+  .card p{margin:0;color:var(--fg-mid);font-size:15px;line-height:1.6}
+  .card .ico{font-size:20px;margin-bottom:14px;display:block}
+
+  ol.steps{counter-reset:s;list-style:none;padding:0;margin:0;display:grid;gap:18px}
+  ol.steps li{counter-increment:s;display:flex;gap:18px;align-items:flex-start}
+  ol.steps li::before{
+    content:counter(s);flex:none;width:30px;height:30px;border-radius:9px;
+    background:var(--ember-soft);border:1px solid rgba(255,106,43,.28);color:var(--ember);
+    font-family:var(--mono);font-size:13px;display:grid;place-items:center;margin-top:2px;
+  }
+  ol.steps b{display:block;margin-bottom:2px}
+  ol.steps p{margin:0;color:var(--fg-mid);font-size:15px}
+
+  details{border:1px solid var(--line-soft);border-radius:12px;padding:16px 18px;margin-bottom:10px;background:var(--bg-card)}
+  details summary{cursor:pointer;font-weight:600;font-size:15.5px;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary::before{content:"+";color:var(--ember);font-family:var(--mono);margin-right:10px}
+  details[open] summary::before{content:"−"}
+  details p{color:var(--fg-mid);font-size:15px;margin:12px 0 0}
+  details code{font-family:var(--mono);font-size:13px;background:rgba(255,255,255,.07);padding:2px 6px;border-radius:5px}
+
+  table.req{width:100%;border-collapse:collapse;font-size:15px}
+  table.req td{padding:11px 0;border-bottom:1px solid var(--line-soft);color:var(--fg-mid)}
+  table.req td:first-child{color:var(--fg);font-weight:600;width:190px}
+  table.req tr:last-child td{border-bottom:0}
+
+  .pill{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--fg-dim);border:1px solid var(--line);
+    border-radius:999px;padding:3px 10px;margin-left:8px;vertical-align:middle}
+
+  footer{border-top:1px solid var(--line-soft);padding:44px 0 60px;color:var(--fg-dim);font-size:14px}
+  footer a{color:var(--fg-mid);text-decoration:none}
+  footer a:hover{color:var(--fg)}
+  .foot{display:flex;gap:22px;flex-wrap:wrap;align-items:center}
+  .foot .spacer{flex:1}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="#top"><img src="images/logo.png" alt="" /> Phoenix</a>
+    <a class="link" href="#how">How it works</a>
+    <a class="link" href="#features">Features</a>
+    <a class="link" href="#install">Install</a>
+    <a class="link" href="#faq">FAQ</a>
+    <span class="spacer"></span>
+    <a class="btn btn-primary btn-sm" href="https://github.com/mailtoharutyunyan/phoenix-releases/releases/latest">Download</a>
+  </div>
+</header>
+
+<a id="top"></a>
+<div class="wrap hero">
+  <span class="eyebrow">macOS · Apple Silicon</span>
+  <h1>Your interview,<br /><span class="accent">with a second brain.</span></h1>
+  <p class="sub">
+    Phoenix listens to the call, transcribes both sides, and streams an answer into an overlay
+    about a second and a half after the question ends — in a window that screen sharing cannot see.
+  </p>
+  <div class="cta">
+    <a class="btn btn-primary" href="#install">Install on macOS</a>
+    <a class="btn btn-ghost" href="#how">See how it works</a>
+  </div>
+  <p class="note">Free. No account, no API key. Speech recognition runs on your Mac.</p>
+
+  <div class="hero-shot">
+    <div class="shot"><img src="images/03-answer.png" alt="The Phoenix overlay: a question restated, then a structured spoken answer, above a live transcript strip and the command bar." /></div>
+    <p class="cap">The overlay during a call — the question it heard, the answer to speak, and the controls.</p>
+  </div>
+</div>
+
+<!-- ── how it works ─────────────────────────────────────────────── -->
+<section id="how">
+  <div class="wrap">
+    <p class="kicker">How it works</p>
+    <h2>Four steps, then it stays out of the way</h2>
+    <p class="lead">You set up a session before the call. During it, Phoenix does the listening.</p>
+    <ol class="steps">
+      <li><div><b>Tell it where you are interviewing</b><p>Company, the job description, and which kind of round it is — technical, system design, or an HR screen. Each one changes how it answers.</p></div></li>
+      <li><div><b>Start the session</b><p>Phoenix captures your microphone and the other side's audio separately, and labels who said what.</p></div></li>
+      <li><div><b>It answers when the question ends</b><p>Automatically, or when you press ⌘↵. The question is restated first, so you can confirm it heard the right thing before you trust the answer.</p></div></li>
+      <li><div><b>Nothing of it reaches the share</b><p>The window is excluded from screen capture, so what the interviewer sees is your screen without it.</p></div></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ── setup ────────────────────────────────────────────────────── -->
+<section>
+  <div class="wrap split">
+    <div class="txt">
+      <p class="kicker">Before the call</p>
+      <h2>It answers as you, not as a chatbot</h2>
+      <p class="lead">
+        Give it the company and the role and it specialises on them. Attach your résumé and it
+        answers in your own history — the whole CV goes in, so "tell me about yourself" walks your
+        career forward instead of naming whichever jobs happened to be retrieved.
+      </p>
+      <p class="lead">
+        Reference documents are searched locally and only the relevant parts are attached, so a long
+        handbook does not crowd out the question.
+      </p>
+    </div>
+    <div class="shot"><img src="images/01-dashboard.png" alt="The session setup screen: session type, company and job description fields." /></div>
+  </div>
+</section>
+
+<!-- ── design board ─────────────────────────────────────────────── -->
+<section>
+  <div class="wrap split flip">
+    <div class="txt">
+      <p class="kicker">System design rounds</p>
+      <h2>It draws the architecture while you talk</h2>
+      <p class="lead">
+        Ask it to design something and the diagram is drawn as a separate, concurrent request — so the
+        words you speak arrive in about two seconds and do not wait for the picture.
+      </p>
+      <p class="lead">
+        The board starts with a core of five to seven boxes and holds the rest back, dimmed, as
+        "say it, draw if asked" — because reproducing an eighteen-node architecture at minute three
+        spends the clock and pre-empts the interviewer. Every box explains itself on hover, and the
+        request path is numbered so you can narrate it in order.
+      </p>
+    </div>
+    <div class="shot"><img src="images/04-design-board.png" alt="A system design session: the spoken answer on the left, an architecture diagram with tiered bands and a numbered request path on the right." /></div>
+  </div>
+</section>
+
+<!-- ── features ─────────────────────────────────────────────────── -->
+<section id="features">
+  <div class="wrap">
+    <p class="kicker">What else</p>
+    <h2>Built for the twenty seconds you actually have</h2>
+    <p class="lead">Everything here exists because something went wrong in a real call without it.</p>
+    <div class="grid">
+      <div class="card">
+        <span class="ico">🎙️</span>
+        <h3>Hears both sides</h3>
+        <p>Your microphone and the interviewer's audio are captured separately and labelled, so the app knows which one asked the question.</p>
+      </div>
+      <div class="card">
+        <span class="ico">🖥️</span>
+        <h3>Invisible to screen sharing</h3>
+        <p>Excluded from capture at the window level. Verified against the same framework Zoom, Meet and Teams use — the overlay is simply absent from the frame.</p>
+      </div>
+      <div class="card">
+        <span class="ico">⚡</span>
+        <h3>Answers in about 1.5s</h3>
+        <p>A warm session is kept ready between questions, and the model is chosen for how fast it starts speaking rather than how it benchmarks.</p>
+      </div>
+      <div class="card">
+        <span class="ico">📸</span>
+        <h3>Reads your screen</h3>
+        <p>Screenshot the coding exercise and it answers about what is on it. Multiple captures work too — two windows, or one long file scrolled.</p>
+      </div>
+      <div class="card">
+        <span class="ico">🔒</span>
+        <h3>Speech never leaves your Mac</h3>
+        <p>Transcription runs on-device. Nothing is written to disk unless you turn on transcript saving for that session.</p>
+      </div>
+      <div class="card">
+        <span class="ico">🔌</span>
+        <h3>Works offline too</h3>
+        <p>Prefer nothing to leave at all? Switch to the bundled local model. There is always an on-device path, and no feature requires an account.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── install ──────────────────────────────────────────────────── -->
+<section id="install">
+  <div class="wrap">
+    <p class="kicker">Install</p>
+    <h2>One command</h2>
+    <p class="lead">Paste this into Terminal. It downloads the current release, checks its signature, installs it to Applications and opens it.</p>
+
+    <div class="install">
+      <div class="install-label">macOS · Apple Silicon</div>
+      <div class="code" id="cmd"><span class="prompt">$ </span>curl -fsSL https://github.com/mailtoharutyunyan/phoenix-releases/releases/latest/download/install.sh | bash<button class="copy" onclick="copyCmd(this)">Copy</button></div>
+      <p class="note">
+        macOS will not block it and you will not have to type anything else.
+        <a href="https://github.com/mailtoharutyunyan/phoenix-releases/blob/main/install.sh" style="color:var(--fg-mid)">Read the script</a> first if you like.
+      </p>
+
+      <div class="install-label" style="margin-top:30px">If that returns <code style="font-family:var(--mono)">error: 429</code></div>
+      <div class="code" id="cmd2"><span class="prompt">$ </span>curl -fsSL https://cdn.jsdelivr.net/gh/mailtoharutyunyan/phoenix-releases@main/install.sh | bash<button class="copy" onclick="copyCmd(this)">Copy</button></div>
+      <p class="note">A 429 is a GitHub rate limit, not a problem with your Mac. The mirror fetches the same script.</p>
+
+      <div style="margin-top:34px">
+        <a class="btn btn-ghost" href="https://github.com/mailtoharutyunyan/phoenix-releases/releases/latest">Or download the .dmg</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── requirements ─────────────────────────────────────────────── -->
+<section>
+  <div class="wrap" style="max-width:820px">
+    <p class="kicker">Requirements</p>
+    <h2>What you need</h2>
+    <table class="req">
+      <tr><td>Mac</td><td>Apple Silicon (M1 or later). There is no Intel build.</td></tr>
+      <tr><td>macOS</td><td>macOS 14 or later.</td></tr>
+      <tr><td>Disk</td><td>About 2 GB, plus 3–5 GB if you run a language model locally.</td></tr>
+      <tr><td>Memory</td><td>16 GB recommended when running a model locally.</td></tr>
+      <tr><td>Windows <span class="pill">coming soon</span></td><td>Not released yet. Every build so far is macOS only.</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ── faq ──────────────────────────────────────────────────────── -->
+<section id="faq">
+  <div class="wrap" style="max-width:820px">
+    <p class="kicker">FAQ</p>
+    <h2>Questions worth answering honestly</h2>
+
+    <details>
+      <summary>Can the interviewer see it?</summary>
+      <p>Not in a screen share. The window is excluded from screen capture at the OS level, which was measured against the same capture framework Zoom, Meet and Teams use: the overlay is present in a screenshot with protection off, and completely absent with it on. It is on by default, and a banner appears whenever you turn it off, because forgetting is the one failure this app must not have. It does not hide the app from someone sitting next to you.</p>
+    </details>
+
+    <details>
+      <summary>Does my audio leave my computer?</summary>
+      <p>Speech recognition always runs on your Mac — no audio is uploaded, ever. The answer itself is generated by whichever engine you choose. By default that is the Claude Code CLI running on your own subscription, so the question and the surrounding transcript go to Anthropic; if you would rather nothing left at all, switch to the bundled local model, which runs entirely offline. The app tells you which engine is active rather than making you guess.</p>
+    </details>
+
+    <details>
+      <summary>Do I need an API key or a subscription?</summary>
+      <p>No key, ever. If you already have a Claude or Codex CLI installed and signed in, Phoenix uses it. If you do not, it falls back to the local model automatically — nothing breaks, answers just come from a model on your machine instead.</p>
+    </details>
+
+    <details>
+      <summary>Is anything recorded?</summary>
+      <p>A transcript reaches disk only if you switch on "save transcript" for that session, and it is off by default — the transcript contains the other participant's speech, recorded without their consent. Screenshots are temporary and deleted after the answer.</p>
+    </details>
+
+    <details>
+      <summary>macOS says the app is "damaged". Is it?</summary>
+      <p>No. Phoenix is not signed with a paid Apple Developer certificate, and "damaged" is simply the wording macOS uses for that. The flag is applied by the browser that downloaded it — a download made with <code>curl</code> never gets one, which is why the install command above works and double-clicking a browser download does not.</p>
+    </details>
+
+    <details>
+      <summary>Why do I have to grant permissions again after an update?</summary>
+      <p>Because each build is a new identity to macOS's privacy system when it is not signed with a Developer ID. Microphone and Screen Recording have to be granted again after each update. It is expected, and the troubleshooting guide explains how to clear the stale entry.</p>
+    </details>
+  </div>
+</section>
+
+<!-- ── docs ─────────────────────────────────────────────────────── -->
+<section>
+  <div class="wrap">
+    <p class="kicker">Documentation</p>
+    <h2>Guides</h2>
+    <div class="grid">
+      <a class="card" style="text-decoration:none" href="https://github.com/mailtoharutyunyan/phoenix-releases/blob/main/docs/getting-started.md"><h3>Getting started →</h3><p>Permissions, your first session, what each mode is for.</p></a>
+      <a class="card" style="text-decoration:none" href="https://github.com/mailtoharutyunyan/phoenix-releases/blob/main/docs/during-a-call.md"><h3>During a call →</h3><p>The overlay, answering, screenshots, system design.</p></a>
+      <a class="card" style="text-decoration:none" href="https://github.com/mailtoharutyunyan/phoenix-releases/blob/main/docs/shortcuts.md"><h3>Keyboard shortcuts →</h3><p>Every shortcut, verified against the build.</p></a>
+      <a class="card" style="text-decoration:none" href="https://github.com/mailtoharutyunyan/phoenix-releases/blob/main/docs/settings.md"><h3>Settings →</h3><p>Models, speech engine, staying hidden.</p></a>
+      <a class="card" style="text-decoration:none" href="https://github.com/mailtoharutyunyan/phoenix-releases/blob/main/docs/privacy.md"><h3>Privacy →</h3><p>What is stored, what leaves your machine.</p></a>
+      <a class="card" style="text-decoration:none" href="https://github.com/mailtoharutyunyan/phoenix-releases/blob/main/docs/troubleshooting.md"><h3>Troubleshooting →</h3><p>Permissions, "damaged", audio, updates.</p></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <span>Phoenix — all rights reserved.</span>
+    <span class="spacer"></span>
+    <a href="https://github.com/mailtoharutyunyan/phoenix-releases/releases">Releases</a>
+    <a href="https://github.com/mailtoharutyunyan/phoenix-releases/blob/main/docs/privacy.md">Privacy</a>
+    <a href="https://github.com/mailtoharutyunyan/phoenix-releases/blob/main/docs/troubleshooting.md">Support</a>
+  </div>
+</footer>
+
+<script>
+  function copyCmd(btn){
+    // Copy the command WITHOUT the "$ " prompt or the button's own label — pasting either
+    // into a terminal is the classic way a copy button wastes someone's time.
+    var box = btn.parentNode.cloneNode(true);
+    var p = box.querySelector('.prompt'); if (p) p.remove();
+    var b = box.querySelector('.copy');   if (b) b.remove();
+    navigator.clipboard.writeText(box.textContent.trim()).then(function(){
+      var old = btn.textContent; btn.textContent = 'Copied';
+      setTimeout(function(){ btn.textContent = old; }, 1400);
+    });
+  }
+</script>
+</body>
+</html>

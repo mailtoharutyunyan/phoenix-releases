@@ -2,17 +2,41 @@
 
 # Phoenix
 
-**An AI interview assistant for macOS and Windows. It listens to a call, transcribes both sides,
+**An AI interview assistant for macOS. It listens to a call, transcribes both sides,
 and streams answers into an overlay that stays out of your screen share.**
 
 Speech recognition, document search, and — if you want it — the language model itself
 all run on your own machine.
 
-[![Latest release](https://img.shields.io/github/v/release/mailtoharutyunyan/phoenix-releases?style=for-the-badge&label=download&color=2b7fff)](../../releases/latest)
+[![Latest release](https://img.shields.io/github/v/release/mailtoharutyunyan/phoenix-releases?style=for-the-badge&label=download&color=ff6a2b)](../../releases/latest)
 [![Platform](https://img.shields.io/badge/macOS-Apple%20Silicon-black?style=for-the-badge&logo=apple)](../../releases/latest)
-[![Windows](https://img.shields.io/badge/Windows-10%2B-0078D4?style=for-the-badge&logo=windows)](../../releases/latest)
+[![Windows](https://img.shields.io/badge/Windows-planned-6b7280?style=for-the-badge&logo=windows)](#install-on-windows)
+
+**[Website and screenshots &raquo;](https://mailtoharutyunyan.github.io/phoenix-releases/)**
+
+<img src="docs/images/03-answer.png" alt="The Phoenix overlay during a call" width="820">
 
 </div>
+
+---
+
+## What it looks like
+
+<table>
+<tr>
+<td width="50%"><img src="docs/images/01-dashboard.png" alt="Session setup"><br><sub><b>Before the call.</b> Company, job description and round type &mdash; technical, system design or HR screen.</sub></td>
+<td width="50%"><img src="docs/images/04-design-board.png" alt="System design board"><br><sub><b>System design rounds.</b> The architecture is drawn beside the answer, as a separate request, so your words never wait for the picture.</sub></td>
+</tr>
+</table>
+
+| | |
+|:--|:--|
+| **Hears both sides** | Your mic and the interviewer's audio, captured separately and labelled. |
+| **Invisible to screen sharing** | Excluded from screen capture at the window level. On by default. |
+| **Answers in about 1.5s** | A warm session is kept ready between questions. |
+| **Reads your screen** | Screenshot the exercise and it answers about what is on it. |
+| **Speech stays on your Mac** | Transcription runs on-device; no audio is uploaded, ever. |
+| **Works offline** | Switch to the bundled local model. No account, no API key. |
 
 ---
 
@@ -77,17 +101,20 @@ A 429 is temporary. Waiting a few minutes also clears it.
 **Prefer to do it by hand?**
 
 ```bash
-echo "Downloading Phoenix (about 165 MB)…" \
-  && curl -L# https://github.com/mailtoharutyunyan/phoenix-releases/releases/latest/download/Phoenix-1.6.1-arm64-mac.zip -o /tmp/phoenix.zip \
-  && echo "Installing…" \
-  && rm -rf /Applications/Phoenix.app \
-  && unzip -q /tmp/phoenix.zip -d /Applications \
-  && rm /tmp/phoenix.zip \
-  && echo "Done." \
+echo "Downloading Phoenix…" \\
+  && URL=$(curl -fsSL https://api.github.com/repos/mailtoharutyunyan/phoenix-releases/releases/latest \\
+       | grep -o 'https://[^"]*arm64-mac\\.zip') \\
+  && curl -L# "$URL" -o /tmp/phoenix.zip \\
+  && echo "Installing…" \\
+  && rm -rf /Applications/Phoenix.app \\
+  && unzip -q /tmp/phoenix.zip -d /Applications \\
+  && rm /tmp/phoenix.zip \\
+  && echo "Done." \\
   && open /Applications/Phoenix.app
 ```
 
-`-#` draws a progress bar — a silent 165 MB download looks like a frozen Terminal.
+`-#` draws a progress bar — a silent 165 MB download looks like a frozen Terminal. The inner
+`curl` resolves whichever release is current, so the command does not go stale.
 
 **Already downloaded it in a browser and macOS is refusing to open it?** Nothing is wrong with
 the file — see [Troubleshooting](docs/troubleshooting.md#macos-says-the-app-is-damaged-or-unverified).
@@ -96,8 +123,9 @@ the file — see [Troubleshooting](docs/troubleshooting.md#macos-says-the-app-is
 
 ## Install on Windows
 
-Run the `.exe` installer. SmartScreen may warn on first run because the build is unsigned —
-choose *More info → Run anyway*.
+**Not released yet.** The Windows code paths exist, but no Windows installer has shipped — every
+release so far is macOS only. There is nothing to download; this section will say otherwise when
+there is.
 
 ---
 
@@ -111,13 +139,14 @@ choose *More info → Run anyway*.
 | **[Settings](docs/settings.md)** | Models, speech engine, staying hidden |
 | **[Privacy](docs/privacy.md)** | What is stored, what leaves your machine |
 | **[Troubleshooting](docs/troubleshooting.md)** | Permissions, "damaged", audio, updates |
+| **[Website](https://mailtoharutyunyan.github.io/phoenix-releases/)** | Screenshots, how it works, FAQ |
 
 ---
 
 ## Requirements
 
 - **macOS:** Apple Silicon (M1 or later), macOS 14 or later
-- **Windows:** Windows 10 or later, 64-bit
+- **Windows:** not released yet — see above
 - **Disk:** ~2 GB for the app, plus 3–5 GB if you use a local language model
 - **Memory:** 16 GB recommended when running a model locally
 
