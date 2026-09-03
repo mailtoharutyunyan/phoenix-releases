@@ -170,6 +170,10 @@ h2{font-size:clamp(28px,3.6vw,42px);line-height:1.1;letter-spacing:-.028em;font-
 .shot{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--bg-lift);box-shadow:0 24px 60px rgba(0,0,0,.5)}
 .shot img{display:block;width:100%;height:auto}
 .wide{margin-top:40px}
+/* A wide, short crop: no card chrome, because a 1721x219 strip inside a bordered panel reads
+   as a screenshot of a screenshot. It sits on the page as the object itself. */
+.band{margin-top:36px;border-radius:12px;overflow:hidden;box-shadow:0 18px 44px rgba(0,0,0,.5)}
+.band img{display:block;width:100%;height:auto}
 
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 @media(max-width:900px){.grid{grid-template-columns:1fr}}
@@ -363,6 +367,19 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
          persuasive screenshot on the page reduced to mush. Cropped to the drawing itself, with
          the dead band between the last node and the path strip removed. -->
     <div class="shot"><img src="images/04-design-board.png" alt="The architecture board: tiered bands, a numbered request path along the bottom, and held-back components drawn dimmed." /></div>
+  </div>
+</section>
+
+<section id="controls">
+  <div class="wrap">
+    <p class="kicker">The whole interface</p>
+    <h2>Three buttons and a clock</h2>
+    <p class="lead">
+      Answer what it just heard, capture the screen, or type instead. The strip above shows what it
+      is hearing; the red clock is how long you have been in the call, and pressing it twice ends
+      the session and frees the models it loaded.
+    </p>
+    <div class="band"><img src="images/05-command-bar.png" alt="The in-call bar: a transcript strip reading Listening, and the command bar with Answer, Screenshot and Chat, capture indicators, and the session clock." /></div>
   </div>
 </section>
 
