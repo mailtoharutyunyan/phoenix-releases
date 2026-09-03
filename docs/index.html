@@ -174,7 +174,20 @@ h2{font-size:clamp(28px,3.6vw,42px);line-height:1.1;letter-spacing:-.028em;font-
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 @media(max-width:900px){.grid{grid-template-columns:1fr}}
 .card{background:var(--card);border:1px solid var(--line-soft);border-radius:var(--r);padding:26px;transition:border-color .16s ease}
-.card:hover{border-color:var(--line)}
+.card:hover{border-color:rgba(255,106,43,.28);transform:translateY(-2px)}
+.card{transition:border-color .16s ease,transform .16s ease}
+
+/* A readout, not a feature list: these are settled facts about the build, and the
+   monospaced key/value shape says "spec sheet" without needing a heading to say it. */
+.spec{border:1px solid var(--line);border-radius:var(--r);background:var(--card);overflow:hidden}
+.spec-row{display:flex;gap:16px;align-items:baseline;padding:13px 18px;border-top:1px solid var(--line-soft)}
+.spec-row:first-child{border-top:0}
+.spec-row span{
+  font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--dim);flex:none;width:132px;
+}
+.spec-row b{font-size:14.5px;font-weight:550;color:var(--ink)}
+@media(max-width:520px){.spec-row{flex-direction:column;gap:3px}.spec-row span{width:auto}}
 .card h3{margin:0 0 8px;font-size:17px;font-weight:640;letter-spacing:-.012em}
 .card p{margin:0;color:var(--mid);font-size:14.8px;line-height:1.58}
 .card .ic{
@@ -244,6 +257,7 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
   <nav class="nav wrap-none">
     <a class="brand" href="#top"><img src="images/logo.png" alt="" />Phoenix</a>
     <a class="lk" href="#how">How it works</a>
+    <a class="lk" href="#engine">Under the hood</a>
     <a class="lk" href="#features">Features</a>
     <a class="lk" href="#install">Install</a>
     <a class="lk" href="#faq">FAQ</a>
@@ -258,7 +272,7 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
     <div class="trust">
       <span><b>macOS</b> · Apple Silicon</span>
       <span><b>No account</b>, no API key</span>
-      <span>Speech runs <b>on your Mac</b></span>
+      <span>Parakeet TDT runs <b>on your Mac</b></span>
     </div>
 
     <h1>Your <em>real-time</em><br />interview assistant</h1>
@@ -313,13 +327,15 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
       <p class="kicker">Before the call</p>
       <h2>It answers as you, not as a chatbot</h2>
       <p class="lead" style="margin-bottom:20px">
-        Give it the company and the role and it specialises on them. Attach your résumé and it
-        answers from your own history — the whole CV goes in, so “tell me about yourself” walks your
-        career forward instead of naming whichever jobs happened to be retrieved.
+        Give it the company and the role and it specialises on them. Attach your résumé and every
+        answer is grounded in <b style="color:var(--ink);font-weight:600">the whole CV</b>, not a
+        search result from it — so “tell me about yourself” walks your career forward in order
+        instead of naming whichever jobs a search happened to surface.
       </p>
       <p class="lead" style="margin-bottom:0">
-        Reference documents are searched on your machine, and only the relevant passages are
-        attached — so a long handbook never crowds out the question.
+        Your other documents work the other way round. They are indexed on your machine and
+        searched per question, so only the passages that answer it are attached — a two-hundred-page
+        handbook never crowds out the thing you were asked.
       </p>
     </div>
     <div class="shot"><img src="images/01-dashboard.png" alt="The session setup screen: session type, company and job description." /></div>
@@ -350,6 +366,36 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
   </div>
 </section>
 
+<section id="engine">
+  <div class="wrap split">
+    <div class="txt">
+      <p class="kicker">Under the hood</p>
+      <h2>Local where it counts</h2>
+      <p class="lead" style="margin-bottom:20px">
+        Speech recognition is NVIDIA's <b style="color:var(--ink);font-weight:600">Parakeet TDT</b>,
+        running on your Mac through Apple's MLX. <b style="color:var(--ink);font-weight:600">v2</b> is
+        the default — English only, and the more accurate of the two on technical vocabulary.
+        <b style="color:var(--ink);font-weight:600">v3</b> covers 25 languages when you need them.
+      </p>
+      <p class="lead" style="margin-bottom:0">
+        Your documents are embedded and searched on-device too. Nothing is indexed in a cloud,
+        and there is no vector database to sign up for — the index lives in the app, next to
+        the documents it came from.
+      </p>
+    </div>
+    <div class="spec">
+      <div class="spec-row"><span>Speech</span><b>Parakeet TDT 0.6B · v2 / v3</b></div>
+      <div class="spec-row"><span>Runs on</span><b>Apple MLX, on-device</b></div>
+      <div class="spec-row"><span>Languages</span><b>English (v2) · 25 (v3)</b></div>
+      <div class="spec-row"><span>Retrieval</span><b>Dense + BM25, RRF-fused</b></div>
+      <div class="spec-row"><span>Embeddings</span><b>gte-small · 384-dim · local</b></div>
+      <div class="spec-row"><span>Per question</span><b>Top 6 passages</b></div>
+      <div class="spec-row"><span>Your résumé</span><b>Sent whole, never sampled</b></div>
+      <div class="spec-row"><span>Audio uploaded</span><b>None, ever</b></div>
+    </div>
+  </div>
+</section>
+
 <section id="features">
   <div class="wrap">
     <p class="kicker">Details</p>
@@ -360,8 +406,8 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
       <div class="card"><span class="ic"><img src="images/icons/eye-off.svg" alt="" /></span><h3>Invisible to screen sharing</h3><p>Excluded from capture at the window level. Measured against the same framework Zoom, Meet and Teams use — the overlay is simply absent from the frame.</p></div>
       <div class="card"><span class="ic"><img src="images/icons/zap.svg" alt="" /></span><h3>Answers in about 1.5s</h3><p>A warm session is kept ready between questions, and the model is picked for how fast it starts speaking rather than how it benchmarks.</p></div>
       <div class="card"><span class="ic"><img src="images/icons/scan-text.svg" alt="" /></span><h3>Reads your screen</h3><p>Screenshot the exercise and it answers about what is on it. Several captures work too — two windows, or one long file scrolled.</p></div>
-      <div class="card"><span class="ic"><img src="images/icons/shield-check.svg" alt="" /></span><h3>Speech never leaves your Mac</h3><p>Transcription runs on-device. Nothing reaches disk unless you switch on transcript saving for that session.</p></div>
-      <div class="card"><span class="ic"><img src="images/icons/wifi-off.svg" alt="" /></span><h3>Works offline</h3><p>Prefer nothing to leave at all? Switch to the bundled local model. There is always an on-device path, and no feature needs an account.</p></div>
+      <div class="card"><span class="ic"><img src="images/icons/shield-check.svg" alt="" /></span><h3>Speech never leaves your Mac</h3><p>Parakeet TDT transcribes on-device through Apple MLX — v2 for English, v3 for 25 languages. No audio is uploaded, and nothing reaches disk unless you switch on transcript saving.</p></div>
+      <div class="card"><span class="ic"><img src="images/icons/library-big.svg" alt="" /></span><h3>Knows your documents</h3><p>Notes, a spec, a company handbook — indexed on your Mac and searched per question, so the passages that answer it come along and the rest stays out of the way.</p></div>
     </div>
   </div>
 </section>
@@ -430,7 +476,7 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
 <section class="closing">
   <div class="wrap">
     <h2>Your next interview is the one to be ready for</h2>
-    <p class="lead" style="max-width:520px">Install it in under a minute. No account, nothing to cancel.</p>
+    <p class="lead" style="max-width:560px">Install it in under a minute. No account, nothing to cancel — and if you would rather nothing left your Mac at all, switch to the bundled local model and it runs entirely offline.</p>
     <div class="cta"><a class="btn btn-primary" href="#install">Install on macOS →</a></div>
   </div>
 </section>
