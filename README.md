@@ -2,15 +2,15 @@
 
 # Phoenix
 
-**An AI interview assistant for macOS. It listens to a call, transcribes both sides,
-and streams answers into an overlay that stays out of your screen share.**
+**An AI interview assistant for macOS, now in preview on Windows. It listens to a call,
+transcribes both sides, and streams answers into an overlay that stays out of your screen share.**
 
 Speech recognition, document search, and — if you want it — the language model itself
 all run on your own machine.
 
 [![Latest release](https://img.shields.io/github/v/release/mailtoharutyunyan/phoenix-releases?style=for-the-badge&label=download&color=ff6a2b)](../../releases/latest)
 [![Platform](https://img.shields.io/badge/macOS-Apple%20Silicon-black?style=for-the-badge&logo=apple)](../../releases/latest)
-[![Windows](https://img.shields.io/badge/Windows-planned-6b7280?style=for-the-badge&logo=windows)](#install-on-windows)
+[![Windows](https://img.shields.io/badge/Windows-x64%20preview-0078d4?style=for-the-badge&logo=windows)](#install-on-windows)
 
 **[Website and screenshots &raquo;](https://mailtoharutyunyan.github.io/phoenix-releases/)**
 
@@ -35,7 +35,7 @@ all run on your own machine.
 | **Invisible to screen sharing** | Excluded from screen capture at the window level. On by default. |
 | **Answers in about 1.5s** | A warm session is kept ready between questions. |
 | **Reads your screen** | Screenshot the exercise and it answers about what is on it. |
-| **Speech stays on your Mac** | Transcription runs on-device; no audio is uploaded, ever. |
+| **Speech stays on your machine** | Transcription runs on-device; no audio is uploaded, ever. |
 | **Works offline** | Switch to the bundled local model. No account, no API key. |
 
 ---
@@ -123,9 +123,66 @@ the file — see [Troubleshooting](docs/troubleshooting.md#macos-says-the-app-is
 
 ## Install on Windows
 
-**Not released yet.** The Windows code paths exist, but no Windows installer has shipped — every
-release so far is macOS only. There is nothing to download; this section will say otherwise when
-there is.
+**Preview — x64.** One command. Paste it into PowerShell:
+
+```powershell
+irm https://github.com/mailtoharutyunyan/phoenix-releases/releases/latest/download/install.ps1 | iex
+```
+
+That finds the current Windows release, downloads the installer, checks the bytes arrived intact,
+and runs it. The installer is a normal wizard — you choose where it goes.
+
+**Windows will warn you, and it is supposed to.** SmartScreen says *"Windows protected your PC —
+unknown publisher"*. That is the absence of a code-signing certificate, not a malware finding.
+Choose **More info → Run anyway**.
+
+<details>
+<summary><b>How this differs from the macOS install — read before you trust it</b></summary>
+
+The macOS script verifies the app's code signature with `codesign --verify --deep --strict` and
+**installs nothing if that check fails**. There is no equivalent here, and the difference is real:
+
+- the Windows installer carries **no Authenticode signature** (no paid certificate), so nothing
+  proves who built it;
+- the Windows build publishes **no checksum file**, so there is nothing official to compare against.
+
+What [the script](install.ps1) does check is that the download is complete (byte count matches the
+release metadata) and is a real Windows executable (`MZ` header), and it prints the SHA-256 so you
+can compare it yourself. It does not claim more than that.
+
+</details>
+
+<details>
+<summary><b>Prefer to do it by hand?</b></summary>
+
+```powershell
+$r = Invoke-RestMethod https://api.github.com/repos/mailtoharutyunyan/phoenix-releases/releases
+$a = ($r | Where-Object { $_.assets.name -like '*.exe' } | Select-Object -First 1).assets |
+       Where-Object { $_.name -like '*.exe' }
+Invoke-WebRequest $a.browser_download_url -OutFile "$env:TEMP\$($a.name)"
+Start-Process "$env:TEMP\$($a.name)"
+```
+
+The list endpoint is used rather than `/releases/latest` on purpose — see the note below.
+
+</details>
+
+**Why the one-liner looks for a release rather than "the latest one."** `releases/latest` excludes
+prereleases, and the Windows build ships on a prerelease tag today. That is deliberate: a full
+release becomes the update feed that every installed **macOS** copy reads, and a Windows-only build
+must not become that. The script walks the release list and takes the newest one that actually
+carries a `.exe`, so it works now and keeps working when Windows ships as a full release.
+
+**x64 only.** It runs on Windows 11 on ARM under emulation, but there is no native ARM64 build.
+
+**Known gaps on Windows**, so you are not surprised by them:
+
+| | |
+|---|---|
+| Speech | Parakeet v2 via sherpa-onnx (English). The multilingual v3 int8 build is offered too. On **ARM64** Windows neither runs and it falls back to Whisper. |
+| Auto-update | Not wired. Re-run the command above to update. |
+| Start at login / crash restart | macOS only — the setting is hidden on Windows. |
+| Screen-share auto-hide | macOS only. Private mode itself still works. |
 
 ---
 
@@ -146,14 +203,17 @@ there is.
 ## Requirements
 
 - **macOS:** Apple Silicon (M1 or later), macOS 14 or later
-- **Windows:** not released yet — see above
+- **Windows:** x64, Windows 10 or later — preview, see above. No native ARM64 build.
 - **Disk:** ~2 GB for the app, plus 3–5 GB if you use a local language model
 - **Memory:** 16 GB recommended when running a model locally
 
 ## Updating
 
-Phoenix checks for updates on launch and can install them itself. You can also re-run the
-install command above at any time — it replaces the existing copy.
+On macOS, Phoenix checks for updates on launch and can install them itself. You can also re-run
+the install command above at any time — it replaces the existing copy.
+
+**On Windows there is no auto-update yet** — re-run the PowerShell command to move to a newer
+build.
 
 You will be asked to grant Microphone and Screen Recording again after each update. That is
 expected, and [explained here](docs/troubleshooting.md#i-have-to-grant-permissions-again-after-every-update).
