@@ -79,16 +79,44 @@ $out = Join-Path $env:TEMP $asset.name
 $sizeMb = [math]::Round($asset.size / 1MB, 1)
 Write-Step "Downloading $sizeMb MB..."
 
-# Invoke-WebRequest's progress bar makes a large download roughly an order of magnitude slower
-# in PS 5.1, because it repaints per chunk. WebClient streams it without that cost; a silent
-# multi-hundred-MB download looks frozen, so report on completion instead of per chunk.
+# PROGRESS IS NOT OPTIONAL HERE, AND NEITHER IS Invoke-WebRequest.
+#
+# `Invoke-WebRequest`'s own progress bar repaints per chunk and makes a large download roughly
+# an order of magnitude slower in PS 5.1, so it is not usable. But simply suppressing it and
+# calling the blocking `WebClient.DownloadFile` prints nothing at all for 110 MB — reported
+# from a real install as "windows is not showing progress", and indistinguishable from a hung
+# script. install.sh already learned this on macOS and passes `curl -#` for the same reason.
+#
+# So: download ASYNCHRONOUSLY and poll the file on disk against the size GitHub already told us
+# in the release metadata. The bar is drawn with a carriage return on one line, four times a
+# second, which costs nothing measurable and never scrolls.
 $prevProgress = $ProgressPreference
 $ProgressPreference = 'SilentlyContinue'
+$wc = $null
 try {
     $wc = New-Object System.Net.WebClient
     $wc.Headers.Add('User-Agent', 'phoenix-installer')
-    $wc.DownloadFile($asset.browser_download_url, $out)
+    $task = $wc.DownloadFileTaskAsync($asset.browser_download_url, $out)
+
+    $total = [double]$asset.size
+    $started = Get-Date
+    while (-not $task.IsCompleted) {
+        Start-Sleep -Milliseconds 250
+        $have = 0
+        if (Test-Path $out) { try { $have = (Get-Item $out).Length } catch { $have = 0 } }
+        $frac = if ($total -gt 0) { [math]::Min(1.0, $have / $total) } else { 0 }
+        $filled = [int]($frac * 28)
+        $bar = ('=' * $filled).PadRight(28, '.')
+        $elapsed = ((Get-Date) - $started).TotalSeconds
+        $rate = if ($elapsed -gt 0) { ($have / 1MB) / $elapsed } else { 0 }
+        Write-Host -NoNewline ("`r  [{0}] {1,3:N0}%  {2,6:N1}/{3:N1} MB  {4,5:N1} MB/s" -f `
+            $bar, ($frac * 100), ($have / 1MB), ($total / 1MB), $rate)
+    }
+    # Surfaces the real exception; without this a failed task is silently a zero-byte file.
+    $task.GetAwaiter().GetResult()
+    Write-Host -NoNewline ("`r{0}`r" -f (' ' * 78))
 } catch {
+    Write-Host ''
     Die "Download failed: $($_.Exception.Message)"
 } finally {
     $ProgressPreference = $prevProgress
