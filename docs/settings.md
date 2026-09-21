@@ -49,7 +49,9 @@ speech would otherwise come out as convincing-looking nonsense — Armenian sing
 reaching your transcript. This never applies to v3, since choosing v3 means you *want*
 non-English speech.
 
-On Windows, Linux and Intel Macs, a local Whisper model is used instead.
+**On Windows, Linux and Intel Macs the same Parakeet models run through sherpa-onnx** rather
+than MLX — the same v2 and v3, each also offered as a smaller int8 build (about 660 MB instead
+of 2.5 GB). Whisper is the fallback where neither runs, which includes **Windows on ARM**.
 
 ## Staying hidden
 

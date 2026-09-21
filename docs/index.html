@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Phoenix — a real-time AI interview assistant for macOS</title>
-<meta name="description" content="Phoenix listens to your interview, transcribes both sides, and streams the answer into an overlay that screen sharing cannot see. Speech runs on your Mac. macOS, Apple Silicon." />
+<meta name="description" content="Phoenix listens to your interview, transcribes both sides, and streams the answer into an overlay that screen sharing cannot see. Speech runs on your own machine. macOS on Apple Silicon, and a Windows x64 preview." />
 <link rel="icon" href="images/logo.png" />
 <meta property="og:title" content="Phoenix — a real-time AI interview assistant" />
 <meta property="og:description" content="Hears both sides of the call, answers in about a second and a half, and stays out of your screen share." />
@@ -274,9 +274,9 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
 <header class="hero">
   <div class="wrap">
     <div class="trust">
-      <span><b>macOS</b> · Apple Silicon</span>
+      <span><b>macOS</b> · Apple Silicon &nbsp;·&nbsp; <b>Windows</b> x64 preview</span>
       <span><b>No account</b>, no API key</span>
-      <span>Parakeet TDT runs <b>on your Mac</b></span>
+      <span>Parakeet TDT runs <b>on your machine</b></span>
     </div>
 
     <h1>Your <em>real-time</em><br />interview assistant</h1>
@@ -443,6 +443,11 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
     <div class="code"><span class="p">$ </span>curl -fsSL https://cdn.jsdelivr.net/gh/mailtoharutyunyan/phoenix-releases@main/install.sh | bash</div>
     <p class="fine">A 429 is a GitHub rate limit, not a problem with your Mac. The mirror serves the same script.</p>
 
+    <div class="cmdhead" style="margin-top:44px"><span>Windows · x64 &nbsp;<span class="pill">preview</span></span><span class="sp"></span><button class="copy" onclick="copyCmd(this)">Copy</button></div>
+    <div class="code"><span class="p">&gt; </span>irm https://github.com/mailtoharutyunyan/phoenix-releases/releases/latest/download/install.ps1 | iex</div>
+    <p class="fine">Paste that into <b>PowerShell</b>. Windows will warn that the publisher is unknown — the installer is unsigned, so that warning is a missing certificate, not a malware finding. Choose <b>More info</b>, then <b>Run anyway</b>. <a href="https://github.com/mailtoharutyunyan/phoenix-releases/blob/main/install.ps1" style="color:var(--mid);text-decoration:underline">Read the script</a> first if you like.</p>
+    <p class="fine">Unlike the macOS install, this one <b>cannot verify who built the file</b>: there is no code-signing certificate and no published checksum. It checks that the download is complete and is a real Windows executable, and prints its SHA-256 — nothing more, and it does not claim more.</p>
+
     <div style="margin-top:34px"><a class="btn btn-ghost" href="https://github.com/mailtoharutyunyan/phoenix-releases/releases/latest">Or download the .dmg</a></div>
 
     <h2 style="margin-top:80px;font-size:26px">What you need</h2>
@@ -451,7 +456,7 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
       <tr><td>macOS</td><td>macOS 14 or later.</td></tr>
       <tr><td>Disk</td><td>About 2 GB, plus 3–5 GB if you run a language model locally.</td></tr>
       <tr><td>Memory</td><td>16 GB recommended when running a model locally.</td></tr>
-      <tr><td>Windows <span class="pill">coming soon</span></td><td>Not released yet. Every build so far is macOS only.</td></tr>
+      <tr><td>Windows <span class="pill">preview</span></td><td><b>x64, Windows 10 or later.</b> Runs on Windows-on-ARM under emulation; there is no native ARM64 build. Speech uses Parakeet via sherpa-onnx (on ARM it falls back to Whisper). No auto-update yet — re-run the command to move to a newer build.</td></tr>
     </table>
     </div>
   </div>
