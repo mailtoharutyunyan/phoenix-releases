@@ -2,7 +2,7 @@
 
 # Phoenix
 
-**An AI interview assistant for macOS, now in preview on Windows. It listens to a call,
+**An AI interview assistant for macOS and Windows. It listens to a call,
 transcribes both sides, and streams answers into an overlay that stays out of your screen share.**
 
 Speech recognition, document search, and — if you want it — the language model itself
@@ -10,7 +10,7 @@ all run on your own machine.
 
 [![Latest release](https://img.shields.io/github/v/release/mailtoharutyunyan/phoenix-releases?style=for-the-badge&label=download&color=ff6a2b)](../../releases/latest)
 [![Platform](https://img.shields.io/badge/macOS-Apple%20Silicon-black?style=for-the-badge&logo=apple)](../../releases/latest)
-[![Windows](https://img.shields.io/badge/Windows-x64%20preview-0078d4?style=for-the-badge&logo=windows)](#install-on-windows)
+[![Windows](https://img.shields.io/badge/Windows-x64-0078d4?style=for-the-badge&logo=windows)](#install-on-windows)
 
 **[Website and screenshots &raquo;](https://mailtoharutyunyan.github.io/phoenix-releases/)**
 
@@ -123,7 +123,7 @@ the file — see [Troubleshooting](docs/troubleshooting.md#macos-says-the-app-is
 
 ## Install on Windows
 
-**Preview — x64.** One command. Paste it into PowerShell:
+**x64.** One command. Paste it into PowerShell:
 
 ```powershell
 irm https://github.com/mailtoharutyunyan/phoenix-releases/releases/latest/download/install.ps1 | iex
@@ -144,7 +144,8 @@ The macOS script verifies the app's code signature with `codesign --verify --dee
 
 - the Windows installer carries **no Authenticode signature** (no paid certificate), so nothing
   proves who built it;
-- the Windows build publishes **no checksum file**, so there is nothing official to compare against.
+- the release's `latest.yml` does list the installer's SHA-512, but it comes from the same place
+  as the installer, so it proves the file arrived intact — not who made it.
 
 What [the script](install.ps1) does check is that the download is complete (byte count matches the
 release metadata) and is a real Windows executable (`MZ` header), and it prints the SHA-256 so you
@@ -167,11 +168,9 @@ The list endpoint is used rather than `/releases/latest` on purpose — see the 
 
 </details>
 
-**Why the one-liner looks for a release rather than "the latest one."** `releases/latest` excludes
-prereleases, and the Windows build ships on a prerelease tag today. That is deliberate: a full
-release becomes the update feed that every installed **macOS** copy reads, and a Windows-only build
-must not become that. The script walks the release list and takes the newest one that actually
-carries a `.exe`, so it works now and keeps working when Windows ships as a full release.
+**Which release the one-liner installs.** The newest full release that carries a Windows
+installer — the same one every installed copy updates to. From 1.14.0 on, macOS and Windows ship
+together in one release. A prerelease (a test build) is only used if no full release has a `.exe`.
 
 **x64 only.** It runs on Windows 11 on ARM under emulation, but there is no native ARM64 build.
 
@@ -179,8 +178,7 @@ carries a `.exe`, so it works now and keeps working when Windows ships as a full
 
 | | |
 |---|---|
-| Speech | Parakeet v2 via sherpa-onnx (English). The multilingual v3 int8 build is offered too. On **ARM64** Windows neither runs and it falls back to Whisper. |
-| Auto-update | Not wired. Re-run the command above to update. |
+| Speech | Parakeet v2 (English) and v3 (multilingual) via sherpa-onnx, each as a full or a smaller int8 build. On **ARM64** Windows neither runs and it falls back to Whisper. |
 | Start at login / crash restart | macOS only — the setting is hidden on Windows. |
 | Screen-share auto-hide | macOS only. Private mode itself still works. |
 
@@ -203,7 +201,7 @@ carries a `.exe`, so it works now and keeps working when Windows ships as a full
 ## Requirements
 
 - **macOS:** Apple Silicon (M1 or later), macOS 14 or later
-- **Windows:** x64, Windows 10 or later — preview, see above. No native ARM64 build.
+- **Windows:** x64, Windows 10 or later. No native ARM64 build.
 - **Disk:** ~2 GB for the app, plus 3–5 GB if you use a local language model
 - **Memory:** 16 GB recommended when running a model locally
 
@@ -212,8 +210,9 @@ carries a `.exe`, so it works now and keeps working when Windows ships as a full
 On macOS, Phoenix checks for updates on launch and can install them itself. You can also re-run
 the install command above at any time — it replaces the existing copy.
 
-**On Windows there is no auto-update yet** — re-run the PowerShell command to move to a newer
-build.
+**On Windows, Phoenix updates itself too, from 1.14.0 on.** Copies installed from an earlier
+Windows test build pick up 1.14.0 on their own; you can also re-run the PowerShell command at any
+time.
 
 You will be asked to grant Microphone and Screen Recording again after each update. That is
 expected, and [explained here](docs/troubleshooting.md#i-have-to-grant-permissions-again-after-every-update).

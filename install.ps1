@@ -11,16 +11,16 @@
 #           below. This script therefore does less checking, and says so rather than printing
 #           a reassuring tick it has not earned.
 #
-# WHICH RELEASE. `releases/latest` EXCLUDES prereleases, and the Windows build currently ships
-# on prerelease tags (`v1.13.0-win1`), because publishing it as a full release would make it
-# the update feed every installed macOS copy reads. So resolving `latest` would find a release
-# with no .exe on it and fail with a 404 that looks like a broken script. This walks the
-# release list instead and takes the newest one that actually carries a Windows installer,
-# which is correct today and stays correct once Windows ships as a full release.
+# WHICH RELEASE. Windows ships as a FULL release from 1.14.0 on, so the newest full release that
+# carries an .exe is the answer — the same release every installed copy auto-updates to. A
+# prerelease (a test tag such as `v1.14.0-rc1`) is taken only when no full release has an .exe,
+# which is how Windows shipped before 1.14.0 (`v1.13.0-win1`). The list is walked rather than
+# asking for `releases/latest` so that a macOS-only full release cannot make this 404.
 #
 # VERIFICATION, AND ITS LIMIT — READ THIS BEFORE TRUSTING THE TICK. There is no Authenticode
-# signature (no paid code-signing certificate) and no published checksum for the .exe: the
-# Windows job produces no `latest.yml`, so there is nothing to compare against. What this
+# signature (no paid code-signing certificate), so nothing proves who built the .exe. (The
+# release's `latest.yml` does carry its sha512, but that file comes from the same place as the
+# .exe, so it proves integrity, not authorship.) What this
 # script can prove is that the bytes arrived intact and are a real Windows executable — it
 # checks the `MZ` header and a plausible size, and prints the SHA-256 so you can compare it
 # against the release page yourself. What it CANNOT prove is who produced them. Anyone telling
@@ -61,11 +61,16 @@ try {
     Die "Could not reach GitHub. If this says 403 or 429 it is a rate limit, not your machine, and it clears in a few minutes. ($($_.Exception.Message))"
 }
 
+# Two passes over a newest-first list: full releases first, then any release.
 $rel = $null
-foreach ($r in $releases) {
-    if ($r.draft) { continue }
-    $exe = $r.assets | Where-Object { $_.name -like '*.exe' } | Select-Object -First 1
-    if ($exe) { $rel = $r; $asset = $exe; break }
+foreach ($allowPre in @($false, $true)) {
+    foreach ($r in $releases) {
+        if ($r.draft) { continue }
+        if ($r.prerelease -and -not $allowPre) { continue }
+        $exe = $r.assets | Where-Object { $_.name -like '*.exe' } | Select-Object -First 1
+        if ($exe) { $rel = $r; $asset = $exe; break }
+    }
+    if ($rel) { break }
 }
 if (-not $rel) {
     Die 'No release carries a Windows installer yet. Check https://github.com/mailtoharutyunyan/phoenix-releases/releases'
