@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Phoenix — a real-time AI interview assistant for macOS</title>
+<title>Phoenix: a real-time AI interview assistant for macOS and Windows</title>
 <meta name="description" content="Phoenix listens to your interview, transcribes both sides, and streams the answer into an overlay that screen sharing cannot see. Speech runs on your own machine. macOS on Apple Silicon and Windows x64." />
 <link rel="icon" href="images/logo.png" />
-<meta property="og:title" content="Phoenix — a real-time AI interview assistant" />
+<meta property="og:title" content="Phoenix: a real-time AI interview assistant" />
 <meta property="og:description" content="Hears both sides of the call, answers in about a second and a half, and stays out of your screen share." />
 <meta property="og:image" content="images/03-answer.png" />
 <meta property="og:type" content="website" />
@@ -280,10 +280,7 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
     </div>
 
     <h1>Your <em>real-time</em><br />interview assistant</h1>
-    <p class="sub">
-      Phoenix hears the question, writes the answer, and puts it on your screen —
-      in a window your screen share cannot see.
-    </p>
+    <p class="sub">Phoenix listens to the interview, drafts an answer, and shows it in a window that doesn't appear in your screen share.</p>
     <div class="cta">
       <a class="btn btn-primary" href="#install">Install on macOS →</a>
       <a class="btn btn-ghost" href="#how">How it works</a>
@@ -314,13 +311,13 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
 <section id="how">
   <div class="wrap">
     <p class="kicker">How it works</p>
-    <h2>Set it up once. Then it listens.</h2>
-    <p class="lead">Four steps, and only the first one needs you.</p>
+    <h2>How it works</h2>
+    <p class="lead">You set it up once before the call. After that it just listens.</p>
     <ol class="steps">
-      <li><div><b>Tell it where you are interviewing</b><p>Company, the job description, and which round it is — technical, system design, or an HR screen. Each one changes how it answers.</p></div></li>
-      <li><div><b>Start the session</b><p>It captures your microphone and the other side's audio separately, and labels who said what.</p></div></li>
-      <li><div><b>It answers when the question ends</b><p>Automatically, or on ⌘↵. The question is restated first, so you can check it heard you right before you trust the answer.</p></div></li>
-      <li><div><b>Your share stays clean</b><p>The window is excluded from screen capture. What the interviewer sees is your screen, without it.</p></div></li>
+      <li><div><b>Tell it where you are interviewing</b><p>Add the company, the job description and the type of round: technical, system design or HR. The answers change with the round.</p></div></li>
+      <li><div><b>Start the session</b><p>Your mic and the interviewer's audio are recorded separately, so it knows who said what.</p></div></li>
+      <li><div><b>It answers when the question ends</b><p>Automatically when they stop talking, or when you press ⌘↵. It repeats the question first so you can check it heard it right.</p></div></li>
+      <li><div><b>Your share stays clean</b><p>The window is left out of screen capture, so the other side only sees your normal screen.</p></div></li>
     </ol>
   </div>
 </section>
@@ -329,18 +326,9 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
   <div class="wrap split">
     <div class="txt">
       <p class="kicker">Before the call</p>
-      <h2>It answers as you, not as a chatbot</h2>
-      <p class="lead" style="margin-bottom:20px">
-        Give it the company and the role and it specialises on them. Attach your résumé and every
-        answer is grounded in <b style="color:var(--ink);font-weight:600">the whole CV</b>, not a
-        search result from it — so “tell me about yourself” walks your career forward in order
-        instead of naming whichever jobs a search happened to surface.
-      </p>
-      <p class="lead" style="margin-bottom:0">
-        Your other documents work the other way round. They are indexed on your machine and
-        searched per question, so only the passages that answer it are attached — a two-hundred-page
-        handbook never crowds out the thing you were asked.
-      </p>
+      <h2>Answers based on your background</h2>
+      <p class="lead" style="margin-bottom:20px">Add the company and the role and the answers are tailored to them. If you attach your résumé, the <b style="color:var(--ink);font-weight:600">whole CV</b> is used, so “tell me about yourself” goes through your jobs in order instead of picking a few.</p>
+      <p class="lead" style="margin-bottom:0">Other documents work differently. They're indexed on your computer and only the parts that match the current question are used, so a long handbook doesn't get in the way.</p>
     </div>
     <div class="shot"><img src="images/01-dashboard.png" alt="The session setup screen: session type, company and job description." /></div>
   </div>
@@ -350,17 +338,9 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
   <div class="wrap split flip">
     <div class="txt">
       <p class="kicker">System design rounds</p>
-      <h2>It draws the architecture while you talk</h2>
-      <p class="lead" style="margin-bottom:20px">
-        The diagram is a separate, concurrent request, so the words you speak arrive in about two
-        seconds and never wait for the picture.
-      </p>
-      <p class="lead" style="margin-bottom:0">
-        The board opens with a core of five to seven boxes and holds the rest back, dimmed —
-        because reproducing an eighteen-node architecture at minute three spends the clock and
-        pre-empts the interviewer. Every box explains itself on hover, and the request path is
-        numbered along the bottom so you can narrate it in order.
-      </p>
+      <h2>Diagrams for system design</h2>
+      <p class="lead" style="margin-bottom:20px">In system design rounds it draws the architecture next to the answer. The drawing is done separately, so the spoken answer still shows up in about two seconds.</p>
+      <p class="lead" style="margin-bottom:0">It starts with the five to seven main components and keeps the rest greyed out until you need them. Hover over a box to see what it's for. The main request path is numbered along the bottom so you can walk through it in order.</p>
     </div>
     <!-- The board is a PORTRAIT crop, so it belongs in a half column. Shown full-width it was a
          wide canvas mostly made of empty space, and the labels came out unreadable — the most
@@ -374,11 +354,7 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
   <div class="wrap">
     <p class="kicker">The whole interface</p>
     <h2>Three buttons and a clock</h2>
-    <p class="lead">
-      Answer what it just heard, capture the screen, or type instead. The strip above shows what it
-      is hearing; the red clock is how long you have been in the call, and pressing it twice ends
-      the session and frees the models it loaded.
-    </p>
+    <p class="lead">From the bottom bar you can answer what it just heard, answer about your screen, or type a question. The strip above it shows what it's hearing. The red timer is how long you've been on the call; click it twice to end the session and free up memory.</p>
     <div class="band"><img src="images/05-command-bar.png" alt="The in-call bar: a transcript strip reading Listening, and the command bar with Answer, Screenshot and Chat, capture indicators, and the session clock." /></div>
   </div>
 </section>
@@ -388,17 +364,8 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
     <div class="txt">
       <p class="kicker">Under the hood</p>
       <h2>Local where it counts</h2>
-      <p class="lead" style="margin-bottom:20px">
-        Speech recognition is NVIDIA's <b style="color:var(--ink);font-weight:600">Parakeet TDT</b>,
-        running on your Mac through Apple's MLX. <b style="color:var(--ink);font-weight:600">v2</b> is
-        the default — English only, and the more accurate of the two on technical vocabulary.
-        <b style="color:var(--ink);font-weight:600">v3</b> covers 25 languages when you need them.
-      </p>
-      <p class="lead" style="margin-bottom:0">
-        Your documents are embedded and searched on-device too. Nothing is indexed in a cloud,
-        and there is no vector database to sign up for — the index lives in the app, next to
-        the documents it came from.
-      </p>
+      <p class="lead" style="margin-bottom:20px">Speech recognition uses NVIDIA's <b style="color:var(--ink);font-weight:600">Parakeet</b> model and runs on your computer. <b style="color:var(--ink);font-weight:600">v2</b> is the default: English only, and better with technical terms. <b style="color:var(--ink);font-weight:600">v3</b> supports 25 languages.</p>
+      <p class="lead" style="margin-bottom:0">Your documents are searched on your computer too. Nothing is uploaded to a cloud index.</p>
     </div>
     <div class="spec">
       <div class="spec-row"><span>Speech</span><b>Parakeet TDT 0.6B · v2 / v3</b></div>
@@ -416,15 +383,15 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
 <section id="features">
   <div class="wrap">
     <p class="kicker">Details</p>
-    <h2>Built for the twenty seconds you actually have</h2>
-    <p class="lead">Every one of these exists because something went wrong in a real call without it.</p>
+    <h2>Features</h2>
+    <p class="lead">Most of these were added after something went wrong in a real interview.</p>
     <div class="grid">
-      <div class="card"><span class="ic"><img src="images/icons/audio-lines.svg" alt="" /></span><h3>Hears both sides</h3><p>Your microphone and the interviewer's audio are captured separately and labelled, so it knows which one asked the question.</p></div>
-      <div class="card"><span class="ic"><img src="images/icons/eye-off.svg" alt="" /></span><h3>Invisible to screen sharing</h3><p>Excluded from capture at the window level. Measured against the same framework Zoom, Meet and Teams use — the overlay is simply absent from the frame.</p></div>
-      <div class="card"><span class="ic"><img src="images/icons/zap.svg" alt="" /></span><h3>Answers in about 1.5s</h3><p>A warm session is kept ready between questions, and the model is picked for how fast it starts speaking rather than how it benchmarks.</p></div>
-      <div class="card"><span class="ic"><img src="images/icons/scan-text.svg" alt="" /></span><h3>Reads your screen</h3><p>Screenshot the exercise and it answers about what is on it. Several captures work too — two windows, or one long file scrolled.</p></div>
-      <div class="card"><span class="ic"><img src="images/icons/shield-check.svg" alt="" /></span><h3>Speech never leaves your Mac</h3><p>Parakeet TDT transcribes on-device through Apple MLX — v2 for English, v3 for 25 languages. No audio is uploaded, and nothing reaches disk unless you switch on transcript saving.</p></div>
-      <div class="card"><span class="ic"><img src="images/icons/library-big.svg" alt="" /></span><h3>Knows your documents</h3><p>Notes, a spec, a company handbook — indexed on your Mac and searched per question, so the passages that answer it come along and the rest stays out of the way.</p></div>
+      <div class="card"><span class="ic"><img src="images/icons/audio-lines.svg" alt="" /></span><h3>Hears both sides</h3><p>Your mic and the interviewer's audio are captured separately, so it knows who asked the question.</p></div>
+      <div class="card"><span class="ic"><img src="images/icons/eye-off.svg" alt="" /></span><h3>Invisible to screen sharing</h3><p>The window is left out of screen capture. We tested it with the same capture system Zoom, Meet and Teams use, and it doesn't show up.</p></div>
+      <div class="card"><span class="ic"><img src="images/icons/zap.svg" alt="" /></span><h3>Answers in about 1.5s</h3><p>A session stays ready between questions, and the default model was chosen because it starts answering fastest.</p></div>
+      <div class="card"><span class="ic"><img src="images/icons/scan-text.svg" alt="" /></span><h3>Reads your screen</h3><p>Take a screenshot of the task and ask about it. You can take several, for example two windows or a long file.</p></div>
+      <div class="card"><span class="ic"><img src="images/icons/shield-check.svg" alt="" /></span><h3>Speech stays on your computer</h3><p>Transcription runs locally: v2 for English, v3 for 25 languages. Audio is never uploaded, and nothing is saved unless you turn on transcript saving.</p></div>
+      <div class="card"><span class="ic"><img src="images/icons/library-big.svg" alt="" /></span><h3>Knows your documents</h3><p>Add notes, a spec or a company handbook. They're indexed on your computer and only the relevant parts are used for each question.</p></div>
     </div>
   </div>
 </section>
@@ -433,20 +400,20 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
   <div class="wrap"><div class="install">
     <p class="kicker">Install</p>
     <h2>One command</h2>
-    <p class="lead">Paste it into Terminal. It downloads the current release, checks its signature, installs it to Applications and opens it.</p>
+    <p class="lead">Paste this into Terminal. It downloads the latest version, checks its signature, installs it and opens it.</p>
 
     <div class="cmdhead"><span>macOS · Apple Silicon</span><span class="sp"></span><button class="copy" onclick="copyCmd(this)">Copy</button></div>
     <div class="code"><span class="p">$ </span>curl -fsSL https://github.com/mailtoharutyunyan/phoenix-releases/releases/latest/download/install.sh | bash</div>
-    <p class="fine">macOS will not block it, and there is nothing else to type. <a href="https://github.com/mailtoharutyunyan/phoenix-releases/blob/main/install.sh" style="color:var(--mid);text-decoration:underline">Read the script</a> first if you like.</p>
+    <p class="fine">macOS won't block it. <a href="https://github.com/mailtoharutyunyan/phoenix-releases/blob/main/install.sh" style="color:var(--mid);text-decoration:underline">Read the script</a> first if you want.</p>
 
     <div class="cmdhead" style="margin-top:30px"><span>If that returns error: 429</span><span class="sp"></span><button class="copy" onclick="copyCmd(this)">Copy</button></div>
     <div class="code"><span class="p">$ </span>curl -fsSL https://cdn.jsdelivr.net/gh/mailtoharutyunyan/phoenix-releases@main/install.sh | bash</div>
-    <p class="fine">A 429 is a GitHub rate limit, not a problem with your Mac. The mirror serves the same script.</p>
+    <p class="fine">If you get error 429, GitHub is rate-limiting you. The mirror serves the same script.</p>
 
     <div class="cmdhead" style="margin-top:44px"><span>Windows · x64</span><span class="sp"></span><button class="copy" onclick="copyCmd(this)">Copy</button></div>
     <div class="code"><span class="p">&gt; </span>irm https://github.com/mailtoharutyunyan/phoenix-releases/releases/latest/download/install.ps1 | iex</div>
-    <p class="fine">Paste that into <b>PowerShell</b>. Windows will warn that the publisher is unknown — the installer is unsigned, so that warning is a missing certificate, not a malware finding. Choose <b>More info</b>, then <b>Run anyway</b>. <a href="https://github.com/mailtoharutyunyan/phoenix-releases/blob/main/install.ps1" style="color:var(--mid);text-decoration:underline">Read the script</a> first if you like.</p>
-    <p class="fine">Unlike the macOS install, this one <b>cannot verify who built the file</b>: there is no code-signing certificate, and the checksum in the release's <code>latest.yml</code> comes from the same place as the file. It checks that the download is complete and is a real Windows executable, and prints its SHA-256 — nothing more, and it does not claim more.</p>
+    <p class="fine">Paste this into <b>PowerShell</b>. Windows will say the publisher is unknown because the installer isn't signed. Click <b>More info</b>, then <b>Run anyway</b>. <a href="https://github.com/mailtoharutyunyan/phoenix-releases/blob/main/install.ps1" style="color:var(--mid);text-decoration:underline">Read the script</a> first if you want.</p>
+    <p class="fine">Without a code-signing certificate the script can't prove who built the file. It checks that the download is complete and prints its SHA-256 so you can compare it with the release page.</p>
 
     <div style="margin-top:34px"><a class="btn btn-ghost" href="https://github.com/mailtoharutyunyan/phoenix-releases/releases/latest">Or download the .dmg</a></div>
 
@@ -456,7 +423,7 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
       <tr><td>macOS</td><td>macOS 14 or later.</td></tr>
       <tr><td>Disk</td><td>About 2 GB, plus 3–5 GB if you run a language model locally.</td></tr>
       <tr><td>Memory</td><td>16 GB recommended when running a model locally.</td></tr>
-      <tr><td>Windows</td><td><b>x64, Windows 10 or later.</b> Runs on Windows-on-ARM under emulation; there is no native ARM64 build. Speech uses Parakeet via sherpa-onnx (on ARM it falls back to Whisper). Updates itself from 1.14.0 on.</td></tr>
+      <tr><td>Windows</td><td><b>x64, Windows 10 or later.</b> Works on ARM laptops through emulation, but speech recognition falls back to Whisper there. Updates itself.</td></tr>
     </table>
     </div>
   </div>
@@ -465,31 +432,31 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
 <section id="faq">
   <div class="wrap">
     <p class="kicker">FAQ</p>
-    <h2>Questions worth answering honestly</h2>
+    <h2>FAQ</h2>
     <div style="margin-top:36px">
       <details>
         <summary>Can the interviewer see it?</summary>
-        <p>Not in a screen share. The window is excluded from screen capture at the OS level, measured against the same capture framework Zoom, Meet and Teams use: the overlay is present in a screenshot with protection off, and completely absent with it on. It is on by default, and a banner appears whenever you turn it off, because forgetting is the one failure this app must not have. It does not hide the app from someone sitting next to you.</p>
+        <p>Not in a screen share. The window is left out of screen capture, and we checked it with the same capture system Zoom, Meet and Teams use: with protection on, the overlay isn't in the frame at all. It's on by default, and you'll see a banner if you turn it off. It won't hide the app from someone sitting next to you.</p>
       </details>
       <details>
         <summary>Does my audio leave my computer?</summary>
-        <p>Speech recognition always runs on your Mac — no audio is uploaded, ever. The answer itself comes from whichever engine you pick. By default that is the Claude Code CLI on your own subscription, so the question and surrounding transcript go to Anthropic. If you would rather nothing left at all, switch to the bundled local model and it runs entirely offline. The app names the active engine rather than making you guess.</p>
+        <p>Your audio doesn't. Speech recognition always runs on your computer. The answer comes from whichever engine you choose. By default that's the Claude Code CLI on your own subscription, so the question and part of the transcript go to Anthropic. If you'd rather nothing left your computer, switch to the built-in local model. The app always shows which engine is active.</p>
       </details>
       <details>
         <summary>Do I need an API key or a subscription?</summary>
-        <p>No key, ever. If you already have the Claude or Codex CLI installed and signed in, Phoenix uses it. If you do not, it falls back to the local model on its own — nothing breaks, the answers just come from a model on your machine.</p>
+        <p>No. If you have the Claude or Codex CLI installed and signed in, Phoenix uses it. If not, it uses the local model instead, and everything still works.</p>
       </details>
       <details>
         <summary>Is anything recorded?</summary>
-        <p>A transcript reaches disk only if you switch on “save transcript” for that session, and it is off by default — the transcript contains the other participant's speech, recorded without their consent. Screenshots are temporary and deleted after the answer.</p>
+        <p>Transcripts are only saved if you turn on “save transcript” for a session, and it's off by default, since it includes the other person's voice. Screenshots are deleted after the answer.</p>
       </details>
       <details>
         <summary>macOS says the app is “damaged”. Is it?</summary>
-        <p>No. Phoenix is not signed with a paid Apple Developer certificate, and “damaged” is simply the wording macOS uses for that. The flag comes from the browser that downloaded it — a download made with <code>curl</code> never gets one, which is why the command above works where double-clicking a browser download does not.</p>
+        <p>No. Phoenix isn't signed with a paid Apple certificate, and “damaged” is what macOS says about unsigned apps downloaded in a browser. Files downloaded with <code>curl</code> don't get that flag, which is why the Terminal command works.</p>
       </details>
       <details>
         <summary>Why do I grant permissions again after every update?</summary>
-        <p>Because without a Developer ID each build is a new identity to macOS's privacy system, so Microphone and Screen Recording have to be granted again. It is expected; the troubleshooting guide explains how to clear the stale entry.</p>
+        <p>Because the app isn't signed, macOS treats every new version as a different app, so you need to allow Microphone and Screen Recording again. The troubleshooting guide shows how to clear the old entry.</p>
       </details>
     </div>
   </div>
@@ -497,8 +464,8 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
 
 <section class="closing">
   <div class="wrap">
-    <h2>Your next interview is the one to be ready for</h2>
-    <p class="lead" style="max-width:560px">Install it in under a minute. No account, nothing to cancel — and if you would rather nothing left your Mac at all, switch to the bundled local model and it runs entirely offline.</p>
+    <h2>Try it before your next interview</h2>
+    <p class="lead" style="max-width:560px">It takes about a minute to install and there's no account. If you'd rather nothing left your computer, switch to the local model and it works offline.</p>
     <div class="cta"><a class="btn btn-primary" href="#install">Install on macOS →</a></div>
   </div>
 </section>
