@@ -169,6 +169,12 @@ h2{font-size:clamp(28px,3.6vw,42px);line-height:1.1;letter-spacing:-.028em;font-
 @media(max-width:900px){.split{grid-template-columns:1fr;gap:32px}.split.flip .txt{order:0}}
 .shot{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--bg-lift);box-shadow:0 24px 60px rgba(0,0,0,.5)}
 .shot img{display:block;width:100%;height:auto}
+.theme-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:28px 0 22px}
+.tt{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:14px;color:var(--mid);background:var(--bg-lift);border:1px solid var(--line);border-radius:999px;padding:7px 14px 7px 10px;cursor:pointer;transition:color .15s,border-color .15s}
+.tt i{width:12px;height:12px;border-radius:50%;display:inline-block}
+.tt:hover{color:var(--ink)}
+.tt.on{color:var(--ink);border-color:rgba(255,255,255,.28)}
+.theme-shot{max-width:880px}
 .wide{margin-top:40px}
 /* A wide, short crop: no card chrome, because a 1721x219 strip inside a bordered panel reads
    as a screenshot of a screenshot. It sits on the page as the object itself. */
@@ -262,6 +268,7 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
     <a class="brand" href="#top"><img src="images/logo.png" alt="" />Phoenix</a>
     <a class="lk" href="#how">How it works</a>
     <a class="lk" href="#engine">Under the hood</a>
+    <a class="lk" href="#themes">Themes</a>
     <a class="lk" href="#features">Features</a>
     <a class="lk" href="#install">Install</a>
     <a class="lk" href="#faq">FAQ</a>
@@ -330,7 +337,7 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
       <p class="lead" style="margin-bottom:20px">Add the company and the role and the answers are tailored to them. If you attach your résumé, the <b style="color:var(--ink);font-weight:600">whole CV</b> is used, so “tell me about yourself” goes through your jobs in order instead of picking a few.</p>
       <p class="lead" style="margin-bottom:0">Other documents work differently. They're indexed on your computer and only the parts that match the current question are used, so a long handbook doesn't get in the way.</p>
     </div>
-    <div class="shot"><img src="images/01-dashboard.png" alt="The session setup screen: session type, company and job description." /></div>
+    <div class="shot"><img src="images/themes/dashboard-ember.webp" alt="The session setup screen on frosted glass: session type, company and job description." /></div>
   </div>
 </section>
 
@@ -369,7 +376,7 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
     </div>
     <div class="spec">
       <div class="spec-row"><span>Speech</span><b>Parakeet TDT 0.6B · v2 / v3</b></div>
-      <div class="spec-row"><span>Runs on</span><b>Apple MLX, on-device</b></div>
+      <div class="spec-row"><span>Runs on</span><b>Apple MLX on Mac · sherpa-onnx on Windows</b></div>
       <div class="spec-row"><span>Languages</span><b>English (v2) · 25 (v3)</b></div>
       <div class="spec-row"><span>Retrieval</span><b>Dense + BM25, RRF-fused</b></div>
       <div class="spec-row"><span>Embeddings</span><b>gte-small · 384-dim · local</b></div>
@@ -377,6 +384,22 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
       <div class="spec-row"><span>Your résumé</span><b>Sent whole, never sampled</b></div>
       <div class="spec-row"><span>Audio uploaded</span><b>None, ever</b></div>
     </div>
+  </div>
+</section>
+
+<section id="themes">
+  <div class="wrap">
+    <p class="kicker">Look and feel</p>
+    <h2>Five themes on frosted glass</h2>
+    <p class="lead">On a Mac the dashboard is real frosted glass: whatever is behind the window shows through, blurred. Pick an accent in Settings, under Interface.</p>
+    <div class="theme-tabs" role="group" aria-label="Theme">
+      <button class="tt on" onclick="showTheme(this,'ember')" aria-pressed="true"><i style="background:#d95f2b"></i>Ember</button>
+      <button class="tt" onclick="showTheme(this,'slate')" aria-pressed="false"><i style="background:#4b7bec"></i>Slate</button>
+      <button class="tt" onclick="showTheme(this,'moss')" aria-pressed="false"><i style="background:#3fa96a"></i>Moss</button>
+      <button class="tt" onclick="showTheme(this,'plum')" aria-pressed="false"><i style="background:#a259c9"></i>Plum</button>
+      <button class="tt" onclick="showTheme(this,'carbon')" aria-pressed="false"><i style="background:#8a8a8a"></i>Carbon</button>
+    </div>
+    <div class="shot theme-shot"><img id="theme-shot" src="images/themes/dashboard-ember.webp" alt="The Phoenix dashboard in the Ember theme" /></div>
   </div>
 </section>
 
@@ -482,6 +505,15 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 56px;color:var(--dim
 </footer>
 
 <script>
+function showTheme(btn, id) {
+  document.getElementById('theme-shot').src = 'images/themes/dashboard-' + id + '.webp';
+  document.getElementById('theme-shot').alt = 'The Phoenix dashboard in the ' + btn.textContent.trim() + ' theme';
+  for (const b of document.querySelectorAll('.tt')) {
+    b.classList.toggle('on', b === btn);
+    b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+  }
+}
+
 function copyCmd(btn){
   // Copy the command only — not the "$ " prompt, and not the button's own label.
   // Pasting either into a terminal is the classic way a copy button wastes a minute.

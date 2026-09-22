@@ -21,7 +21,7 @@ overlay that doesn't show up when you share your screen.
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/01-dashboard.png" alt="Session setup"><br><sub>Before the call you add the company, the job description and the kind of round: technical, system design or HR.</sub></td>
+<td width="50%"><img src="docs/images/themes/dashboard-ember.webp" alt="Session setup"><br><sub>Before the call you add the company, the job description and the kind of round: technical, system design or HR.</sub></td>
 <td width="50%"><img src="docs/images/04-design-board.png" alt="System design board"><br><sub>In system design rounds it draws the architecture next to the answer.</sub></td>
 </tr>
 </table>
