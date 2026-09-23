@@ -13,7 +13,7 @@ overlay that doesn't show up when you share your screen.
 
 **[Website and screenshots](https://mailtoharutyunyan.github.io/phoenix-releases/)**
 
-<img src="docs/images/03-answer.png" alt="The Phoenix overlay during a call" width="820">
+<img src="docs/images/03-answer.png" alt="The Phoenix overlay during a call" width="620">
 
 </div>
 
@@ -22,7 +22,10 @@ overlay that doesn't show up when you share your screen.
 <table>
 <tr>
 <td width="50%"><img src="docs/images/themes/dashboard-ember.webp" alt="Session setup"><br><sub>Before the call you add the company, the job description and the kind of round: technical, system design or HR.</sub></td>
-<td width="50%"><img src="docs/images/04-design-board.png" alt="System design board"><br><sub>In system design rounds it draws the architecture next to the answer.</sub></td>
+<td width="50%"><img src="docs/images/settings/settings-answers.webp" alt="Settings"><br><sub>Settings let you pick the model, the answer length and how much it thinks first. Every shortcut can be rebound.</sub></td>
+</tr>
+<tr>
+<td colspan="2"><img src="docs/images/04-design-board.png" alt="System design board"><br><sub>In system design rounds it draws the architecture next to the answer: tiers, a numbered request path, and extra components held back until you need them.</sub></td>
 </tr>
 </table>
 
@@ -30,6 +33,7 @@ overlay that doesn't show up when you share your screen.
 - Hidden from screen sharing. This is on by default.
 - Usually starts answering in about a second and a half.
 - Can read your screen: take a screenshot of a coding task and ask about it.
+- Splits multi-part questions into chips that tick off as you answer, suggests likely follow-ups, and lets you bookmark moments to review after the call.
 - Speech-to-text runs on your computer. Audio is never uploaded.
 - Works offline with the built-in local model. No account or API key needed.
 
